@@ -81,7 +81,7 @@ export default function RecordActivityPage() {
           : `Draft saved for ${routine.title}.`,
         color: status === 'complete' ? 'green' : 'blue',
       })
-      navigate(`/routines/${routine.routineId}`)
+      navigate('/')
     } catch (err) {
       notifications.show({ title: 'Error', message: String(err), color: 'red' })
     } finally {
@@ -104,7 +104,7 @@ export default function RecordActivityPage() {
   return (
     <Stack>
       <Button variant="subtle" leftSection={<IconArrowLeft size={16} />}
-        onClick={() => navigate(`/routines/${routine.routineId}`)} w="fit-content">
+        onClick={() => navigate('/')} w="fit-content">
         Back
       </Button>
 

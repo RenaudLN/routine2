@@ -8,7 +8,7 @@ import {
   ThemeIcon,
   useMantineTheme,
 } from '@mantine/core'
-import { IconHome, IconList, IconPlus } from '@tabler/icons-react'
+import { IconHome, IconList, IconPlus, IconHistory } from '@tabler/icons-react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 
 interface BottomNavItem {
@@ -19,7 +19,7 @@ interface BottomNavItem {
 
 const navItems: BottomNavItem[] = [
   { label: 'Home', icon: <IconHome size={22} />, path: '/' },
-  { label: 'Routines', icon: <IconList size={22} />, path: '/routines' },
+  { label: 'History', icon: <IconHistory size={22} />, path: '/history' },
 ]
 
 function BottomNavButton({
@@ -124,15 +124,11 @@ export default function AppShellLayout() {
             </Stack>
           </UnstyledButton>
 
-          {/* Routines */}
+          {/* History */}
           <BottomNavButton
             item={navItems[1]}
-            active={
-              location.pathname === '/routines' ||
-              (location.pathname.startsWith('/routines/') &&
-                location.pathname !== '/routines/new')
-            }
-            onClick={() => navigate('/routines')}
+            active={location.pathname === '/history'}
+            onClick={() => navigate('/history')}
           />
         </Group>
       </AppShell.Footer>

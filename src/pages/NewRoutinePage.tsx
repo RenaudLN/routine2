@@ -162,7 +162,7 @@ export default function NewRoutinePage() {
         <Button
           variant="subtle"
           leftSection={<IconArrowLeft size={16} />}
-          onClick={() => navigate('/routines')}
+          onClick={() => navigate('/')}
           w="fit-content"
         >
           Back
@@ -331,7 +331,7 @@ export default function NewRoutinePage() {
 
       {/* Actions */}
       <Group justify="flex-end" pb="xl">
-        <Button variant="default" onClick={() => navigate('/routines')}>
+        <Button variant="default" onClick={() => navigate('/')}>
           Cancel
         </Button>
         <Button loading={saving} onClick={() => void handleSave()}>

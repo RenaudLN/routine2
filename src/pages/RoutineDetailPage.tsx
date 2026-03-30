@@ -29,7 +29,7 @@ export default function RoutineDetailPage() {
         <Button
           variant="subtle"
           leftSection={<IconArrowLeft size={16} />}
-          onClick={() => navigate('/routines')}
+          onClick={() => navigate('/')}
           w="fit-content"
         >
           Back
@@ -46,7 +46,7 @@ export default function RoutineDetailPage() {
 
   const handleDelete = async () => {
     await deleteRoutine(routine.routineId)
-    navigate('/routines')
+    navigate('/')
   }
 
   return (
@@ -54,7 +54,7 @@ export default function RoutineDetailPage() {
       <Button
         variant="subtle"
         leftSection={<IconArrowLeft size={16} />}
-        onClick={() => navigate('/routines')}
+        onClick={() => navigate('/')}
         w="fit-content"
       >
         Back

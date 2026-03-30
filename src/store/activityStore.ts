@@ -11,6 +11,16 @@ export function todayISO(): string {
   return `${yyyy}-${mm}-${dd}`
 }
 
+/** Returns an ISO date string YYYY-MM-DD for `daysAgo` days before today. */
+export function daysAgoISO(daysAgo: number): string {
+  const d = new Date()
+  d.setDate(d.getDate() - daysAgo)
+  const yyyy = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
+}
+
 interface ActivityState {
   /** Activities currently loaded in memory (for the active view). */
   activities: Activity[]
@@ -22,6 +32,12 @@ interface ActivityState {
 
   /** Load all activities for a given date (YYYY-MM-DD), ordered by routineId. */
   fetchActivitiesByDate: (date: string) => Promise<void>
+
+  /**
+   * Load all activities from the past `days` days (inclusive of today),
+   * ordered by date desc. Defaults to 30 days.
+   */
+  fetchRecentActivities: (days?: number) => Promise<void>
 
   /**
    * Create a new Activity (draft or complete).
@@ -52,6 +68,10 @@ export const useActivityStore = create<ActivityState>((set) => ({
   error: null,
 
   fetchActivitiesByRoutine: async (routineId) => {
+    if (!routineId) {
+      set({ activities: [], loading: false, error: null })
+      return
+    }
     set({ loading: true, error: null })
     try {
       const activities = await db.activities
@@ -66,6 +86,10 @@ export const useActivityStore = create<ActivityState>((set) => ({
   },
 
   fetchActivitiesByDate: async (date) => {
+    if (!date) {
+      set({ activities: [], loading: false, error: null })
+      return
+    }
     set({ loading: true, error: null })
     try {
       const activities = await db.activities
@@ -78,7 +102,24 @@ export const useActivityStore = create<ActivityState>((set) => ({
     }
   },
 
+  fetchRecentActivities: async (days = 30) => {
+    set({ loading: true, error: null })
+    try {
+      const from = daysAgoISO(days - 1)
+      const to = todayISO()
+      const activities = await db.activities
+        .where('date')
+        .between(from, to, true, true)
+        .reverse()
+        .sortBy('date')
+      set({ activities, loading: false })
+    } catch (err) {
+      set({ error: String(err), loading: false })
+    }
+  },
+
   addActivity: async ({ routineId, routineVersion, date, status, fieldValues }) => {
+    if (!routineId) throw new Error('routineId is required to add activity')
     const now = new Date()
     const id = (await db.activities.add({
       routineId,

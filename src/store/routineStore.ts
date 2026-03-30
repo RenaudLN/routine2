@@ -33,9 +33,7 @@ interface RoutineState {
 /** Loads all non-deleted latest versions, ordered by createdAt desc. */
 async function loadLatestVersions(): Promise<RoutineSummary[]> {
   const versions = await db.routineVersions
-    .where('isLatest')
-    .equals(1) // Dexie stores booleans as 0/1 in indexes
-    .filter((v) => v.deletedAt === undefined)
+    .filter((v) => !!v.isLatest && v.deletedAt === undefined)
     .toArray()
   return versions.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
 }
@@ -73,6 +71,7 @@ export const useRoutineStore = create<RoutineState>((set) => ({
   },
 
   updateRoutine: async (routineId, { title, description, fields }) => {
+    if (!routineId) throw new Error('Routine ID is required for updating')
     const now = new Date()
     await db.transaction('rw', db.routineVersions, async () => {
       const current = await db.routineVersions
@@ -96,6 +95,7 @@ export const useRoutineStore = create<RoutineState>((set) => ({
   },
 
   deleteRoutine: async (routineId) => {
+    if (!routineId) return
     const latest = await db.routineVersions
       .where('[routineId+version]')
       .between([routineId, Dexie.minKey], [routineId, Dexie.maxKey])
@@ -108,6 +108,7 @@ export const useRoutineStore = create<RoutineState>((set) => ({
   },
 
   fetchVersions: async (routineId) => {
+    if (!routineId) return []
     return db.routineVersions
       .where('[routineId+version]')
       .between([routineId, Dexie.minKey], [routineId, Dexie.maxKey])
@@ -115,6 +116,7 @@ export const useRoutineStore = create<RoutineState>((set) => ({
   },
 
   fetchLatestVersion: async (routineId) => {
+    if (!routineId) return null
     const version = await db.routineVersions
       .where('[routineId+version]')
       .between([routineId, Dexie.minKey], [routineId, Dexie.maxKey])
