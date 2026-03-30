@@ -1,26 +1,44 @@
+import Dexie from 'dexie'
 import { create } from 'zustand'
 import { db } from '../db'
-import type { Routine, RoutineStep } from '../types'
+import type { RoutineField, RoutineVersion } from '../types'
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
+/** The shape exposed to the UI: the latest RoutineVersion for each Routine. */
+export type RoutineSummary = RoutineVersion
 
 interface RoutineState {
-  routines: Routine[]
+  /** Latest (non-deleted) version for each Routine, ordered by createdAt desc. */
+  routines: RoutineSummary[]
   loading: boolean
   error: string | null
 
-  // Actions
   fetchRoutines: () => Promise<void>
-  addRoutine: (data: { title: string; description?: string; steps: RoutineStep[] }) => Promise<number>
-  updateRoutine: (id: number, data: Partial<Omit<Routine, 'id' | 'createdAt'>>) => Promise<void>
-  deleteRoutine: (id: number) => Promise<void>
+  addRoutine: (data: {
+    title: string
+    description?: string
+    fields: RoutineField[]
+  }) => Promise<number>
+  updateRoutine: (routineId: number, data: {
+    title: string
+    description?: string
+    fields: RoutineField[]
+  }) => Promise<void>
+  deleteRoutine: (routineId: number) => Promise<void>
+  /** Returns all versions for a given routineId, ordered by version asc. */
+  fetchVersions: (routineId: number) => Promise<RoutineVersion[]>
+  /** Returns the latest version for a given routineId, or null if not found. */
+  fetchLatestVersion: (routineId: number) => Promise<RoutineVersion | null>
 }
 
-// ---------------------------------------------------------------------------
-// Store
-// ---------------------------------------------------------------------------
+/** Loads all non-deleted latest versions, ordered by createdAt desc. */
+async function loadLatestVersions(): Promise<RoutineSummary[]> {
+  const versions = await db.routineVersions
+    .where('isLatest')
+    .equals(1) // Dexie stores booleans as 0/1 in indexes
+    .filter((v) => v.deletedAt === undefined)
+    .toArray()
+  return versions.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+}
 
 export const useRoutineStore = create<RoutineState>((set) => ({
   routines: [],
@@ -30,39 +48,77 @@ export const useRoutineStore = create<RoutineState>((set) => ({
   fetchRoutines: async () => {
     set({ loading: true, error: null })
     try {
-      const routines = await db.routines.orderBy('createdAt').reverse().toArray()
+      const routines = await loadLatestVersions()
       set({ routines, loading: false })
     } catch (err) {
       set({ error: String(err), loading: false })
     }
   },
 
-  addRoutine: async ({ title, description, steps }) => {
+  addRoutine: async ({ title, description, fields }) => {
     const now = new Date()
-    const id = await db.routines.add({
+    const routineId = (await db.routines.add({ createdAt: now })) as number
+    await db.routineVersions.add({
+      routineId,
+      version: 1,
       title,
       description,
-      steps,
+      fields,
       createdAt: now,
-      updatedAt: now,
+      isLatest: true,
     })
-    // Refresh list
-    const routines = await db.routines.orderBy('createdAt').reverse().toArray()
+    const routines = await loadLatestVersions()
     set({ routines })
-    return id as number
+    return routineId
   },
 
-  updateRoutine: async (id, data) => {
-    await db.routines.update(id, { ...data, updatedAt: new Date() })
-    const routines = await db.routines.orderBy('createdAt').reverse().toArray()
+  updateRoutine: async (routineId, { title, description, fields }) => {
+    const now = new Date()
+    await db.transaction('rw', db.routineVersions, async () => {
+      const current = await db.routineVersions
+        .where('[routineId+version]')
+        .between([routineId, Dexie.minKey], [routineId, Dexie.maxKey])
+        .last()
+      if (!current) throw new Error(`No version found for routineId ${routineId}`)
+      await db.routineVersions.update(current.id!, { isLatest: false })
+      await db.routineVersions.add({
+        routineId,
+        version: current.version + 1,
+        title,
+        description,
+        fields,
+        createdAt: now,
+        isLatest: true,
+      })
+    })
+    const routines = await loadLatestVersions()
     set({ routines })
   },
 
-  deleteRoutine: async (id) => {
-    await db.routines.delete(id)
-    // Also remove associated logs
-    await db.logs.where('routineId').equals(id).delete()
-    const routines = await db.routines.orderBy('createdAt').reverse().toArray()
+  deleteRoutine: async (routineId) => {
+    const latest = await db.routineVersions
+      .where('[routineId+version]')
+      .between([routineId, Dexie.minKey], [routineId, Dexie.maxKey])
+      .last()
+    if (latest?.id) {
+      await db.routineVersions.update(latest.id, { deletedAt: new Date() })
+    }
+    const routines = await loadLatestVersions()
     set({ routines })
+  },
+
+  fetchVersions: async (routineId) => {
+    return db.routineVersions
+      .where('[routineId+version]')
+      .between([routineId, Dexie.minKey], [routineId, Dexie.maxKey])
+      .toArray()
+  },
+
+  fetchLatestVersion: async (routineId) => {
+    const version = await db.routineVersions
+      .where('[routineId+version]')
+      .between([routineId, Dexie.minKey], [routineId, Dexie.maxKey])
+      .last()
+    return version ?? null
   },
 }))

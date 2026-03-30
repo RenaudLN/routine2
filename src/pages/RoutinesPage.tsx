@@ -29,13 +29,13 @@ export default function RoutinesPage() {
 
       {routines.map((routine) => (
         <Card
-          key={routine.id}
+          key={routine.routineId}
           shadow="sm"
           padding="md"
           radius="md"
           withBorder
           style={{ cursor: 'pointer' }}
-          onClick={() => navigate(`/routines/${routine.id}`)}
+          onClick={() => navigate(`/routines/${routine.routineId}`)}
         >
           <Text fw={600}>{routine.title}</Text>
           {routine.description && (
@@ -44,7 +44,8 @@ export default function RoutinesPage() {
             </Text>
           )}
           <Text size="xs" c="dimmed" mt={8}>
-            {routine.steps.length} step{routine.steps.length !== 1 ? 's' : ''}
+            v{routine.version} &middot; {routine.fields.length} field
+            {routine.fields.length !== 1 ? 's' : ''}
           </Text>
         </Card>
       ))}
