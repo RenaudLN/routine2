@@ -21,4 +21,6 @@ export const router = createBrowserRouter([
     ],
   },
   { path: '*', element: <NotFoundPage /> },
-])
+], {
+  basename: '/routine2/'
+})
