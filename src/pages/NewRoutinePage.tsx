@@ -1,11 +1,12 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import {
   ActionIcon,
   Button,
   Checkbox,
   Divider,
   Group,
+  Loader,
   NumberInput,
   Paper,
   Select,
@@ -51,13 +52,44 @@ function createDraftField(): DraftField {
 
 export default function NewRoutinePage() {
   const navigate = useNavigate()
-  const { addRoutine } = useRoutineStore()
+  const { id } = useParams()
+  const isEdit = !!id
+  const { addRoutine, updateRoutine, fetchLatestVersion } = useRoutineStore()
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [fields, setFields] = useState<DraftField[]>([createDraftField()])
+  const [loading, setLoading] = useState(isEdit)
   const [saving, setSaving] = useState(false)
   const [titleError, setTitleError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (isEdit) {
+      void (async () => {
+        try {
+          const latest = await fetchLatestVersion(Number(id))
+          if (latest) {
+            setTitle(latest.title)
+            setDescription(latest.description ?? '')
+            setFields(
+              latest.fields.map((f) => ({
+                ...f,
+                _key: crypto.randomUUID(),
+              }))
+            )
+          }
+        } catch (err) {
+          notifications.show({
+            title: 'Error loading routine',
+            message: String(err),
+            color: 'red',
+          })
+        } finally {
+          setLoading(false)
+        }
+      })()
+    }
+  }, [id, isEdit, fetchLatestVersion])
 
   // ---------------------------------------------------------------------------
   // Field helpers
@@ -130,17 +162,31 @@ export default function NewRoutinePage() {
 
     setSaving(true)
     try {
-      const routineId = await addRoutine({
-        title: title.trim(),
-        description: description.trim() || undefined,
-        fields: cleanFields,
-      })
-      notifications.show({
-        title: 'Routine created',
-        message: `"${title.trim()}" has been saved.`,
-        color: 'green',
-      })
-      navigate(`/routines/${routineId}`)
+      if (isEdit) {
+        await updateRoutine(Number(id), {
+          title: title.trim(),
+          description: description.trim() || undefined,
+          fields: cleanFields,
+        })
+        notifications.show({
+          title: 'Routine updated',
+          message: `"${title.trim()}" has been updated to a new version.`,
+          color: 'green',
+        })
+        navigate(`/routines/${id}`)
+      } else {
+        const routineId = await addRoutine({
+          title: title.trim(),
+          description: description.trim() || undefined,
+          fields: cleanFields,
+        })
+        notifications.show({
+          title: 'Routine created',
+          message: `"${title.trim()}" has been saved.`,
+          color: 'green',
+        })
+        navigate(`/routines/${routineId}`)
+      }
     } catch (err) {
       notifications.show({
         title: 'Error',
@@ -154,6 +200,14 @@ export default function NewRoutinePage() {
   // ---------------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------------
+
+  if (loading) {
+    return (
+      <Group justify="center" py="xl">
+        <Loader />
+      </Group>
+    )
+  }
 
   return (
     <Stack maw={680} mx="auto">
@@ -169,7 +223,7 @@ export default function NewRoutinePage() {
         </Button>
       </Group>
 
-      <Title order={2}>New Routine</Title>
+      <Title order={2}>{isEdit ? 'Edit Routine' : 'New Routine'}</Title>
 
       {/* Routine metadata */}
       <Paper withBorder p="md" radius="md">
@@ -335,7 +389,7 @@ export default function NewRoutinePage() {
           Cancel
         </Button>
         <Button loading={saving} onClick={() => void handleSave()}>
-          Save routine
+          {isEdit ? 'Save new version' : 'Save routine'}
         </Button>
       </Group>
     </Stack>

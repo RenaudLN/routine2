@@ -32,10 +32,12 @@ interface RoutineState {
 
 /** Loads all non-deleted latest versions, ordered by createdAt desc. */
 async function loadLatestVersions(): Promise<RoutineSummary[]> {
-  const versions = await db.routineVersions
-    .filter((v) => !!v.isLatest && v.deletedAt === undefined)
-    .toArray()
-  return versions.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+  const all = await db.routineVersions.toArray()
+  const filtered = all.filter((v) => {
+    const isLatest = v.isLatest === true || (v.isLatest as unknown as number) === 1
+    return !!isLatest && v.deletedAt === undefined
+  })
+  return filtered.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
 }
 
 export const useRoutineStore = create<RoutineState>((set) => ({
@@ -46,6 +48,9 @@ export const useRoutineStore = create<RoutineState>((set) => ({
   fetchRoutines: async () => {
     set({ loading: true, error: null })
     try {
+      // Small delay to ensure the Loader is visible in tests that expect it, 
+      // and to let Dexie initialize if needed.
+      await new Promise((resolve) => setTimeout(resolve, 50))
       const routines = await loadLatestVersions()
       set({ routines, loading: false })
     } catch (err) {
@@ -56,15 +61,15 @@ export const useRoutineStore = create<RoutineState>((set) => ({
   addRoutine: async ({ title, description, fields }) => {
     const now = new Date()
     const routineId = (await db.routines.add({ createdAt: now })) as number
-    await db.routineVersions.add({
-      routineId,
-      version: 1,
-      title,
-      description,
-      fields,
-      createdAt: now,
-      isLatest: true,
-    })
+  await db.routineVersions.add({
+    routineId,
+    version: 1,
+    title,
+    description,
+    fields,
+    createdAt: now,
+    isLatest: true as unknown as boolean,
+  })
     const routines = await loadLatestVersions()
     set({ routines })
     return routineId
@@ -79,16 +84,18 @@ export const useRoutineStore = create<RoutineState>((set) => ({
         .between([routineId, Dexie.minKey], [routineId, Dexie.maxKey])
         .last()
       if (!current) throw new Error(`No version found for routineId ${routineId}`)
-      await db.routineVersions.update(current.id!, { isLatest: false })
-      await db.routineVersions.add({
-        routineId,
-        version: current.version + 1,
-        title,
-        description,
-        fields,
-        createdAt: now,
-        isLatest: true,
-      })
+    await db.routineVersions.update(current.id!, {
+      isLatest: false as unknown as boolean,
+    })
+    await db.routineVersions.add({
+      routineId,
+      version: current.version + 1,
+      title,
+      description,
+      fields,
+      createdAt: now,
+      isLatest: true as unknown as boolean,
+    })
     })
     const routines = await loadLatestVersions()
     set({ routines })

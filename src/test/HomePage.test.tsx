@@ -11,14 +11,24 @@ function renderWithProviders(ui: React.ReactElement) {
   )
 }
 
+import { act } from 'react'
+
 describe('HomePage', () => {
-  it('renders the welcome heading', () => {
-    renderWithProviders(<HomePage />)
-    expect(screen.getByText(/welcome to routine tracker/i)).toBeInTheDocument()
+  it('renders the welcome heading', async () => {
+    await act(async () => {
+      renderWithProviders(<HomePage />)
+    })
+    expect(
+      await screen.findByText(/welcome to routine tracker/i)
+    ).toBeInTheDocument()
   })
 
-  it('renders the CTA button', () => {
-    renderWithProviders(<HomePage />)
-    expect(screen.getByRole('button', { name: /view my routines/i })).toBeInTheDocument()
+  it('renders the CTA button', async () => {
+    await act(async () => {
+      renderWithProviders(<HomePage />)
+    })
+    expect(
+      await screen.findByRole('button', { name: /create your first routine/i })
+    ).toBeInTheDocument()
   })
 })

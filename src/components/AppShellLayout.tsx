@@ -8,7 +8,7 @@ import {
   ThemeIcon,
   useMantineTheme,
 } from '@mantine/core'
-import { IconHome, IconList, IconPlus, IconHistory } from '@tabler/icons-react'
+import { IconHome, IconPlus, IconHistory } from '@tabler/icons-react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 
 interface BottomNavItem {

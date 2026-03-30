@@ -159,7 +159,7 @@ export default function HistoryPage() {
             tickLine="y"
             withTooltip
             tooltipAnimationDuration={150}
-            barProps={{ radius: [4, 4, 4, 4] }}
+            barProps={{ radius: [0, 0, 0, 0] }}
           />
         )}
       </Stack>

@@ -31,6 +31,7 @@ vi.mock('../db', () => {
         versionsStore[id] = { ...v, id }
         return Promise.resolve(id)
       },
+      toArray: () => Promise.resolve(Object.values(versionsStore)),
       update: (id: number, patch: Record<string, unknown>) => {
         versionsStore[id] = { ...versionsStore[id], ...patch }
         return Promise.resolve(1)
