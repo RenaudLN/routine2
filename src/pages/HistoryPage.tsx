@@ -3,18 +3,23 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   Badge,
   Card,
+  Divider,
   Group,
   Loader,
+  Modal,
+  Rating,
   Select,
   Stack,
   Text,
   Title,
 } from '@mantine/core'
+import { useDisclosure } from '@mantine/hooks'
 import { BarChart } from '@mantine/charts'
 import { IconCalendar } from '@tabler/icons-react'
 import { useActivityStore } from '../store/activityStore'
 import { useRoutineStore } from '../store/routineStore'
 import { daysAgoISO, todayISO } from '../store/activityStore'
+import type { Activity, RoutineVersion } from '../types'
 
 /** Mantine theme color palette to cycle through for each routine. */
 const ROUTINE_COLORS = [
@@ -46,8 +51,26 @@ function buildDateRange(days: number): string[] {
 
 export default function HistoryPage() {
   const { activities, loading, fetchRecentActivities } = useActivityStore()
-  const { routines, fetchRoutines } = useRoutineStore()
+  const { routines, fetchRoutines, fetchVersions } = useRoutineStore()
   const [filterRoutineId, setFilterRoutineId] = useState<string | null>(null)
+
+  const [opened, { open, close }] = useDisclosure(false)
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null)
+  const [selectedVersion, setSelectedVersion] = useState<RoutineVersion | null>(null)
+  const [loadingDetail, setLoadingDetail] = useState(false)
+
+  const handleActivityClick = async (activity: Activity) => {
+    setSelectedActivity(activity)
+    setLoadingDetail(true)
+    open()
+    try {
+      const versions = await fetchVersions(activity.routineId)
+      const version = versions.find((v) => v.version === activity.routineVersion)
+      setSelectedVersion(version ?? null)
+    } finally {
+      setLoadingDetail(false)
+    }
+  }
 
   useEffect(() => {
     void fetchRecentActivities(30)
@@ -199,6 +222,8 @@ export default function HistoryPage() {
               padding="sm"
               radius="md"
               withBorder
+              style={{ cursor: 'pointer' }}
+              onClick={() => handleActivityClick(activity)}
             >
               <Group justify="space-between" wrap="nowrap">
                 <Group gap="xs" wrap="nowrap">
@@ -224,6 +249,77 @@ export default function HistoryPage() {
           )
         })}
       </Stack>
+
+      <Modal
+        opened={opened}
+        onClose={close}
+        title={
+          <Title order={3}>
+            {selectedVersion?.title ??
+              routineTitleById.get(selectedActivity?.routineId ?? 0) ??
+              'Activity Detail'}
+          </Title>
+        }
+        size="lg"
+      >
+        {loadingDetail ? (
+          <Loader size="sm" />
+        ) : !selectedActivity ? (
+          <Text>No activity selected</Text>
+        ) : (
+          <Stack gap="md">
+            <Group justify="space-between">
+              <Stack gap={2}>
+                <Text size="sm" fw={500} c="dimmed">
+                  Date
+                </Text>
+                <Text>{formatDateLabel(selectedActivity.date)}</Text>
+              </Stack>
+              <Badge
+                variant="outline"
+                color={selectedActivity.status === 'complete' ? 'green' : 'gray'}
+              >
+                {selectedActivity.status}
+              </Badge>
+            </Group>
+
+            <Divider />
+
+            {selectedVersion?.fields.map((field) => {
+              const val = selectedActivity.fieldValues.find(
+                (fv) => fv.fieldName === field.name,
+              )?.value
+
+              return (
+                <Stack key={field.name} gap={4}>
+                  <Group justify="space-between">
+                    <Text size="sm" fw={600}>
+                      {field.name}
+                    </Text>
+                    {field.type === 'Rating' && typeof val === 'number' && (
+                      <Rating value={val} count={field.ratingMax ?? 5} readOnly />
+                    )}
+                  </Group>
+                  {field.description && (
+                    <Text size="xs" c="dimmed">
+                      {field.description}
+                    </Text>
+                  )}
+                  {field.type !== 'Rating' && (
+                    <Text size="sm">{val === null || val === '' ? '—' : String(val)}</Text>
+                  )}
+                </Stack>
+              )
+            })}
+
+            {!selectedVersion && (
+              <Text size="sm" c="dimmed" fs="italic">
+                Routine definition not found for this version.
+              </Text>
+            )}
+          </Stack>
+        )}
+      </Modal>
     </Stack>
   )
 }
