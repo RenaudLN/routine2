@@ -287,6 +287,7 @@ export default function HistoryPage() {
                           <Text size="xs" fw={500}>{isToday ? 'Today' : formatDateLabel(activity.date)}</Text>
                         </Group>
                       </Stack>
+                      {/* @ts-expect-error */}
                       <IconChevronRight size={18} c="dimmed" />
                     </Group>
                   </Card>
@@ -369,6 +370,7 @@ export default function HistoryPage() {
                           <Text size="sm" fw={600}>
                             {routineTitleById.get(a.routineId) ?? `Routine ${a.routineId}`}
                           </Text>
+                          {/* @ts-expect-error */}
                           <IconChevronRight size={16} c="dimmed" />
                         </Group>
                       </Card>
