@@ -203,7 +203,7 @@ export default function HistoryPage() {
               <Calendar
                 size="md"
                 getDayProps={(date) => ({
-                  onClick: () => handleDayClick(date),
+                  onClick: () => handleDayClick(new Date(date)),
                   style: {
                     position: 'relative',
                     height: 50,
