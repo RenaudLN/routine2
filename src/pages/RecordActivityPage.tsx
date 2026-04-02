@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Button, Group, Loader, NumberInput, Rating, Select,
   Stack, Text, Textarea, TextInput, Title, Alert,
@@ -12,14 +12,14 @@ import { useActivityStore, todayISO } from '../store/activityStore'
 import type { RoutineVersion, FieldValue } from '../types'
 
 export default function RecordActivityPage() {
-  const { id, activityId } = useParams<{ id?: string, activityId?: string }>()
+  const { id, activityId } = useParams<{ id?: string, activityId?: string }>(); const [searchParams] = useSearchParams(); const queryDate = searchParams.get("date")
   const navigate = useNavigate()
   const { fetchLatestVersion, fetchSpecificVersion } = useRoutineStore()
   const { addActivity, updateActivity, fetchActivityById } = useActivityStore()
 
   const [routine, setRoutine] = useState<RoutineVersion | null>(null)
   const [loading, setLoading] = useState(true)
-  const [date, setDate] = useState<string>(todayISO())
+  const [date, setDate] = useState<string>(queryDate || todayISO())
   const [fieldValues, setFieldValues] = useState<Record<string, string | number | null>>({})
   const [saving, setSaving] = useState(false)
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})

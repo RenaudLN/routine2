@@ -1,4 +1,5 @@
 import '@mantine/charts/styles.css'
+import '@mantine/dates/styles.css'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -16,13 +17,25 @@ import {
   ThemeIcon,
   Box,
   Button,
+  SegmentedControl,
+  Badge,
 } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
-import { BarChart } from '@mantine/charts'
-import { IconCalendar, IconChartBar, IconChevronRight, IconActivity, IconEdit, IconTrash } from '@tabler/icons-react'
+import { Calendar } from '@mantine/dates'
+import {
+  IconCalendar,
+  IconChevronRight,
+  IconActivity,
+  IconEdit,
+  IconTrash,
+  IconPlus,
+  IconList,
+  IconCalendarEvent,
+} from '@tabler/icons-react'
+import dayjs from 'dayjs'
 import { useActivityStore } from '../store/activityStore'
 import { useRoutineStore } from '../store/routineStore'
-import { daysAgoISO, todayISO } from '../store/activityStore'
+import { todayISO } from '../store/activityStore'
 import type { Activity, RoutineVersion } from '../types'
 
 /** Mantine theme color palette to cycle through for each routine. */
@@ -48,26 +61,28 @@ function formatDateLabel(iso: string): string {
   })
 }
 
-/** Build the array of the last `days` ISO date strings, oldest first. */
-function buildDateRange(days: number): string[] {
-  return Array.from({ length: days }, (_, i) => daysAgoISO(days - 1 - i))
-}
-
 export default function HistoryPage() {
   const navigate = useNavigate()
   const { activities, loading, fetchRecentActivities, deleteActivity } = useActivityStore()
   const { routines, fetchRoutines, fetchVersions } = useRoutineStore()
+  
+  const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar')
   const [filterRoutineId, setFilterRoutineId] = useState<string | null>(null)
 
-  const [opened, { open, close }] = useDisclosure(false)
+  const [detailOpened, { open: openDetail, close: closeDetail }] = useDisclosure(false)
+  const [dayOpened, { open: openDay, close: closeDay }] = useDisclosure(false)
+  
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null)
   const [selectedVersion, setSelectedVersion] = useState<RoutineVersion | null>(null)
   const [loadingDetail, setLoadingDetail] = useState(false)
+  
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [isAddingNew, setIsAddingNew] = useState(false)
 
   const handleActivityClick = async (activity: Activity) => {
     setSelectedActivity(activity)
     setLoadingDetail(true)
-    open()
+    openDetail()
     try {
       const versions = await fetchVersions(activity.routineId)
       const version = versions.find((v) => v.version === activity.routineVersion)
@@ -80,12 +95,13 @@ export default function HistoryPage() {
   const handleDelete = async (id: number) => {
     if (window.confirm('Are you sure you want to delete this activity?')) {
       await deleteActivity(id)
-      close()
+      closeDetail()
     }
   }
 
   useEffect(() => {
-    void fetchRecentActivities(30)
+    // For now, fetch 60 days to cover current and partial previous months in calendar
+    void fetchRecentActivities(60)
     if (routines.length === 0) void fetchRoutines()
   }, [fetchRecentActivities, fetchRoutines, routines.length])
 
@@ -112,36 +128,6 @@ export default function HistoryPage() {
     return map
   }, [activeRoutineIds])
 
-  // Build chart data: one entry per day, with a key per routineId
-  const chartData = useMemo(() => {
-    const dateRange = buildDateRange(30)
-    // Group activity counts by date + routineId
-    const countMap = new Map<string, Map<number, number>>()
-    for (const a of activities) {
-      if (!countMap.has(a.date)) countMap.set(a.date, new Map())
-      const dayMap = countMap.get(a.date)!
-      dayMap.set(a.routineId, (dayMap.get(a.routineId) ?? 0) + 1)
-    }
-    return dateRange.map((date) => {
-      const entry: Record<string, string | number> = { date: formatDateLabel(date) }
-      for (const id of activeRoutineIds) {
-        entry[String(id)] = countMap.get(date)?.get(id) ?? 0
-      }
-      return entry
-    })
-  }, [activities, activeRoutineIds])
-
-  // Series for the BarChart — one per active routine
-  const series = useMemo(
-    () =>
-      activeRoutineIds.map((id) => ({
-        name: String(id),
-        label: routineTitleById.get(id) ?? `Routine ${id}`,
-        color: colorByRoutineId.get(id) ?? 'indigo.6',
-      })),
-    [activeRoutineIds, routineTitleById, colorByRoutineId],
-  )
-
   // Select options for the filter
   const filterOptions = useMemo(
     () => [
@@ -160,129 +146,245 @@ export default function HistoryPage() {
     return activities.filter((a) => a.routineId === Number(filterRoutineId))
   }, [activities, filterRoutineId])
 
+  // Group activities by date for calendar view
+  const activitiesByDate = useMemo(() => {
+    const map = new Map<string, Activity[]>()
+    for (const a of activities) {
+      const list = map.get(a.date) ?? []
+      list.push(a)
+      map.set(a.date, list)
+    }
+    return map
+  }, [activities])
+
   const today = todayISO()
+
+  const activitiesForSelectedDay = useMemo(() => {
+    if (!selectedDate) return []
+    const iso = dayjs(selectedDate).format('YYYY-MM-DD')
+    return activitiesByDate.get(iso) ?? []
+  }, [selectedDate, activitiesByDate])
+
+  const handleDayClick = (date: Date) => {
+    setSelectedDate(date)
+    setIsAddingNew(false)
+    openDay()
+  }
+
+  const routineSelectData = useMemo(() => 
+    routines.map(r => ({ value: String(r.routineId), label: r.title })),
+    [routines]
+  )
 
   return (
     <Container size="sm" p={0}>
       <Stack gap="xl">
-        <Stack gap={0}>
-          <Title order={2} style={{ fontWeight: 800 }}>Activity History</Title>
-          <Text c="dimmed" size="sm">Review your progress over the last 30 days</Text>
-        </Stack>
+        <Group justify="space-between" align="flex-start">
+          <Stack gap={0}>
+            <Title order={2} style={{ fontWeight: 800 }}>Activity History</Title>
+            <Text c="dimmed" size="sm">Track your consistent progress</Text>
+          </Stack>
+          <SegmentedControl
+            size="xs"
+            radius="xl"
+            value={viewMode}
+            onChange={(v) => setViewMode(v as 'calendar' | 'list')}
+            data={[
+              { label: <Group gap={4}><IconCalendarEvent size={14} />Calendar</Group>, value: 'calendar' },
+              { label: <Group gap={4}><IconList size={14} />List</Group>, value: 'list' },
+            ]}
+          />
+        </Group>
 
-        {/* ── Chart ─────────────────────────────────────────────── */}
-        <Card radius="lg" padding="lg">
+        {viewMode === 'calendar' ? (
+          <Card radius="lg" padding="md" withBorder>
+            <Stack align="center" gap="md">
+              <Calendar
+                size="md"
+                getDayProps={(date) => {
+                  const iso = dayjs(date).format('YYYY-MM-DD')
+                  const dayActivities = activitiesByDate.get(iso) ?? []
+                  return {
+                    onClick: () => handleDayClick(date),
+                    style: {
+                      position: 'relative',
+                      height: 50,
+                      width: 50,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'center',
+                    },
+                    children: (
+                      <Stack gap={2} align="center" style={{ width: '100%' }}>
+                        <Text size="sm">{date.getDate()}</Text>
+                        <Group gap={2} justify="center" wrap="nowrap" style={{ height: 16 }}>
+                          {(() => {
+                            const counts = new Map<number, number>()
+                            dayActivities.forEach(a => counts.set(a.routineId, (counts.get(a.routineId) || 0) + 1))
+                            return Array.from(counts.entries()).slice(0, 3).map(([rid, count]) => (
+                              <Badge 
+                                key={rid} 
+                                variant="filled" 
+                                color={colorByRoutineId.get(rid)} 
+                                size="xs" 
+                                p={0}
+                                circle
+                                style={{ width: 14, height: 14, minWidth: 14, fontSize: 8 }}
+                              >
+                                {count}
+                              </Badge>
+                            ))
+                          })()}
+                          {dayActivities.length > 3 && <Text size="10px" c="dimmed">+</Text>}
+                        </Group>
+                      </Stack>
+                    ),
+                  }
+                }}
+                renderDay={() => null}
+              />
+            </Stack>
+          </Card>
+        ) : (
           <Stack gap="md">
-            <Group gap="xs">
-              <ThemeIcon variant="light" color="indigo" size="sm">
-                <IconChartBar size={16} />
-              </ThemeIcon>
-              <Text fw={700} size="sm">
-                Activity Volume
-              </Text>
+            <Group justify="space-between" align="center">
+              <Group gap="xs">
+                <ThemeIcon variant="light" color="indigo" size="sm">
+                  <IconActivity size={16} />
+                </ThemeIcon>
+                <Text fw={700}>Logged Sessions</Text>
+              </Group>
+              <Select
+                size="xs"
+                placeholder="Filter"
+                data={filterOptions}
+                value={filterRoutineId ?? 'all'}
+                onChange={setFilterRoutineId}
+                clearable={false}
+                radius="md"
+                w={140}
+              />
             </Group>
 
             {loading && <Group justify="center" py="xl"><Loader variant="dots" /></Group>}
 
-            {!loading && activities.length === 0 && (
-              <Box py="xl" style={{ textAlign: 'center' }}>
-                <Text c="dimmed" size="sm">
-                  No activities recorded in the past 30 days.
-                </Text>
-              </Box>
+            {!loading && filteredActivities.length === 0 && (
+              <Card radius="lg" padding="xl" withBorder style={{ borderStyle: 'dashed', textAlign: 'center' }}>
+                <Text c="dimmed" size="sm">No activities found.</Text>
+              </Card>
             )}
 
-            {!loading && activities.length > 0 && (
-              <BarChart
-                h={200}
-                data={chartData}
-                dataKey="date"
-                type="stacked"
-                series={series}
-                withLegend
-                legendProps={{ verticalAlign: 'bottom', height: 40 }}
-                yAxisProps={{ allowDecimals: false, width: 30 }}
-                xAxisProps={{ tick: { fontSize: 10 }, interval: 'preserveStartEnd' }}
-                tickLine="y"
-                withTooltip
-                tooltipAnimationDuration={150}
-                barProps={{ radius: [4, 4, 0, 0] }}
-                gridAxis="none"
-              />
-            )}
+            <Stack gap="sm">
+              {filteredActivities.map((activity) => {
+                const routineTitle = routineTitleById.get(activity.routineId) ?? `Routine ${activity.routineId}`
+                const isToday = activity.date === today
+                return (
+                  <Card key={activity.id} padding="md" radius="md" onClick={() => handleActivityClick(activity)} style={{ cursor: 'pointer' }}>
+                    <Group justify="space-between" wrap="nowrap">
+                      <Stack gap={4}>
+                        <Text fw={700} size="sm">{routineTitle}</Text>
+                        <Group gap={4} c="dimmed">
+                          <IconCalendar size={12} />
+                          <Text size="xs" fw={500}>{isToday ? 'Today' : formatDateLabel(activity.date)}</Text>
+                        </Group>
+                      </Stack>
+                      <IconChevronRight size={18} c="dimmed" />
+                    </Group>
+                  </Card>
+                )
+              })}
+            </Stack>
           </Stack>
-        </Card>
+        )}
 
-        {/* ── Activity list ─────────────────────────────────────── */}
-        <Stack gap="md">
-          <Group justify="space-between" align="center">
-            <Group gap="xs">
-              <ThemeIcon variant="light" color="indigo" size="sm">
-                <IconActivity size={16} />
-              </ThemeIcon>
-              <Text fw={700}>Logged Sessions</Text>
-            </Group>
-            <Select
-              size="xs"
-              placeholder="Filter by routine"
-              data={filterOptions}
-              value={filterRoutineId ?? 'all'}
-              onChange={setFilterRoutineId}
-              clearable={false}
-              radius="md"
-              w={160}
-            />
-          </Group>
-
-          {loading && <Group justify="center" py="xl"><Loader variant="dots" /></Group>}
-
-          {!loading && filteredActivities.length === 0 && (
-            <Card radius="lg" padding="xl" withBorder style={{ borderStyle: 'dashed', textAlign: 'center' }}>
-              <Text c="dimmed" size="sm">
-                No activities found matching your filter.
-              </Text>
-            </Card>
-          )}
-
-          <Stack gap="sm">
-            {filteredActivities.map((activity) => {
-              const routineTitle =
-                routineTitleById.get(activity.routineId) ?? `Routine ${activity.routineId}`
-              const isToday = activity.date === today
-
-              return (
-                <Card
-                  key={activity.id}
-                  padding="md"
-                  radius="md"
-                  onClick={() => handleActivityClick(activity)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <Group justify="space-between" wrap="nowrap">
-                    <Stack gap={4}>
-                      <Group gap="xs" wrap="nowrap">
-                        <Text fw={700} size="sm">
-                          {routineTitle}
-                        </Text>
-                      </Group>
-                      <Group gap={4} c="dimmed">
-                        <IconCalendar size={12} />
-                        <Text size="xs" fw={500}>
-                          {isToday ? 'Today' : formatDateLabel(activity.date)}
-                        </Text>
-                      </Group>
-                    </Stack>
-                    <IconChevronRight size={18} c="dimmed" />
-                  </Group>
-                </Card>
-              )
-            })}
-          </Stack>
-        </Stack>
-
+        {/* ── Day Details Modal ─────────────────────────────────── */}
         <Modal
-          opened={opened}
-          onClose={close}
+          opened={dayOpened}
+          onClose={closeDay}
+          title={
+            <Group gap="sm">
+               <ThemeIcon variant="light" color="indigo" radius="md">
+                  <IconCalendar size={18} />
+               </ThemeIcon>
+               <Title order={4}>
+                {selectedDate ? dayjs(selectedDate).format('MMMM D, YYYY') : 'Day Details'}
+              </Title>
+            </Group>
+          }
+          size="md"
+          radius="lg"
+          centered
+        >
+          <Stack gap="md">
+            <Group justify="space-between">
+               <Text size="sm" fw={700} c="dimmed">Activities</Text>
+               {!isAddingNew && (
+                 <Button 
+                  size="compact-xs" 
+                  variant="light" 
+                  leftSection={<IconPlus size={14} />}
+                  onClick={() => setIsAddingNew(true)}
+                 >
+                   Add New
+                 </Button>
+               )}
+            </Group>
+
+            {isAddingNew ? (
+               <Stack gap="xs" p="sm" bg="var(--mantine-color-gray-0)" style={{ borderRadius: 'var(--mantine-radius-md)' }}>
+                 <Text size="xs" fw={700}>SELECT ROUTINE</Text>
+                 <Select
+                   placeholder="Pick a routine"
+                   data={routineSelectData}
+                   onChange={(val) => {
+                     if (val) {
+                       const dateStr = dayjs(selectedDate).format('YYYY-MM-DD')
+                       navigate(`/routines/${val}/record?date=${dateStr}`)
+                     }
+                   }}
+                   searchable
+                 />
+                 <Button variant="subtle" size="xs" onClick={() => setIsAddingNew(false)}>Cancel</Button>
+               </Stack>
+            ) : (
+              <>
+                {activitiesForSelectedDay.length === 0 ? (
+                  <Box py="xl" style={{ textAlign: 'center' }}>
+                    <Text c="dimmed" size="sm">No activities recorded for this day.</Text>
+                  </Box>
+                ) : (
+                  <Stack gap="xs">
+                    {activitiesForSelectedDay.map((a) => (
+                      <Card 
+                        key={a.id} 
+                        withBorder 
+                        padding="sm" 
+                        radius="md" 
+                        onClick={() => {
+                          closeDay()
+                          handleActivityClick(a)
+                        }}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <Group justify="space-between">
+                          <Text size="sm" fw={600}>
+                            {routineTitleById.get(a.routineId) ?? `Routine ${a.routineId}`}
+                          </Text>
+                          <IconChevronRight size={16} c="dimmed" />
+                        </Group>
+                      </Card>
+                    ))}
+                  </Stack>
+                )}
+              </>
+            )}
+          </Stack>
+        </Modal>
+
+        {/* ── Activity Detail Modal ─────────────────────────────── */}
+        <Modal
+          opened={detailOpened}
+          onClose={closeDetail}
           title={
             <Group gap="sm">
                <ThemeIcon variant="light" color="indigo" radius="md">
