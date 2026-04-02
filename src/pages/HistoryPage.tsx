@@ -12,10 +12,13 @@ import {
   Stack,
   Text,
   Title,
+  Container,
+  ThemeIcon,
+  Box,
 } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { BarChart } from '@mantine/charts'
-import { IconCalendar } from '@tabler/icons-react'
+import { IconCalendar, IconChartBar, IconChevronRight, IconActivity } from '@tabler/icons-react'
 import { useActivityStore } from '../store/activityStore'
 import { useRoutineStore } from '../store/routineStore'
 import { daysAgoISO, todayISO } from '../store/activityStore'
@@ -23,16 +26,16 @@ import type { Activity, RoutineVersion } from '../types'
 
 /** Mantine theme color palette to cycle through for each routine. */
 const ROUTINE_COLORS = [
-  'blue.6',
-  'teal.6',
+  'indigo.6',
+  'cyan.6',
   'violet.6',
+  'teal.6',
   'orange.6',
   'pink.6',
-  'cyan.6',
+  'blue.6',
   'green.6',
   'red.6',
   'yellow.6',
-  'indigo.6',
 ]
 
 /** Format YYYY-MM-DD as a short label like "Mar 30". */
@@ -125,7 +128,7 @@ export default function HistoryPage() {
       activeRoutineIds.map((id) => ({
         name: String(id),
         label: routineTitleById.get(id) ?? `Routine ${id}`,
-        color: colorByRoutineId.get(id) ?? 'blue.6',
+        color: colorByRoutineId.get(id) ?? 'indigo.6',
       })),
     [activeRoutineIds, routineTitleById, colorByRoutineId],
   )
@@ -151,175 +154,214 @@ export default function HistoryPage() {
   const today = todayISO()
 
   return (
-    <Stack gap="xl">
-      <Title order={2}>Activity History</Title>
+    <Container size="sm" p={0}>
+      <Stack gap="xl">
+        <Stack gap={0}>
+          <Title order={2} style={{ fontWeight: 800 }}>Activity History</Title>
+          <Text c="dimmed" size="sm">Review your progress over the last 30 days</Text>
+        </Stack>
 
-      {/* ── Chart ─────────────────────────────────────────────── */}
-      <Stack gap="xs">
-        <Text fw={500} size="sm" c="dimmed">
-          Last 30 days
-        </Text>
-
-        {loading && <Loader size="sm" />}
-
-        {!loading && activities.length === 0 && (
-          <Text c="dimmed" size="sm">
-            No activities recorded in the past 30 days.
-          </Text>
-        )}
-
-        {!loading && activities.length > 0 && (
-          <BarChart
-            h={240}
-            data={chartData}
-            dataKey="date"
-            type="stacked"
-            series={series}
-            withLegend
-            legendProps={{ verticalAlign: 'bottom', height: 40 }}
-            yAxisProps={{ allowDecimals: false, width: 30 }}
-            xAxisProps={{ tick: { fontSize: 11 }, interval: 'preserveStartEnd' }}
-            tickLine="y"
-            withTooltip
-            tooltipAnimationDuration={150}
-            barProps={{ radius: [0, 0, 0, 0] }}
-          />
-        )}
-      </Stack>
-
-      {/* ── Activity list ─────────────────────────────────────── */}
-      <Stack gap="sm">
-        <Group justify="space-between" align="center">
-          <Text fw={600}>Activities</Text>
-          <Select
-            size="xs"
-            placeholder="Filter by routine"
-            data={filterOptions}
-            value={filterRoutineId ?? 'all'}
-            onChange={setFilterRoutineId}
-            clearable={false}
-            w={200}
-          />
-        </Group>
-
-        {loading && <Loader size="sm" />}
-
-        {!loading && filteredActivities.length === 0 && (
-          <Text c="dimmed" size="sm">
-            No activities found.
-          </Text>
-        )}
-
-        {filteredActivities.map((activity) => {
-          const routineTitle =
-            routineTitleById.get(activity.routineId) ?? `Routine ${activity.routineId}`
-          const color = colorByRoutineId.get(activity.routineId) ?? 'blue'
-          const isToday = activity.date === today
-
-          return (
-            <Card
-              key={activity.id}
-              padding="sm"
-              radius="md"
-              withBorder
-              style={{ cursor: 'pointer' }}
-              onClick={() => handleActivityClick(activity)}
-            >
-              <Group justify="space-between" wrap="nowrap">
-                <Group gap="xs" wrap="nowrap">
-                  <Badge color={color.split('.')[0]} variant="light" size="sm">
-                    {routineTitle}
-                  </Badge>
-                  <Group gap={4} c="dimmed">
-                    <IconCalendar size={13} />
-                    <Text size="xs">
-                      {isToday ? 'Today' : formatDateLabel(activity.date)}
-                    </Text>
-                  </Group>
-                </Group>
-                <Badge
-                  size="xs"
-                  variant="outline"
-                  color={activity.status === 'complete' ? 'green' : 'gray'}
-                >
-                  {activity.status}
-                </Badge>
-              </Group>
-            </Card>
-          )
-        })}
-      </Stack>
-
-      <Modal
-        opened={opened}
-        onClose={close}
-        title={
-          <Title order={3}>
-            {selectedVersion?.title ??
-              routineTitleById.get(selectedActivity?.routineId ?? 0) ??
-              'Activity Detail'}
-          </Title>
-        }
-        size="lg"
-      >
-        {loadingDetail ? (
-          <Loader size="sm" />
-        ) : !selectedActivity ? (
-          <Text>No activity selected</Text>
-        ) : (
+        {/* ── Chart ─────────────────────────────────────────────── */}
+        <Card radius="lg" padding="lg">
           <Stack gap="md">
-            <Group justify="space-between">
-              <Stack gap={2}>
-                <Text size="sm" fw={500} c="dimmed">
-                  Date
-                </Text>
-                <Text>{formatDateLabel(selectedActivity.date)}</Text>
-              </Stack>
-              <Badge
-                variant="outline"
-                color={selectedActivity.status === 'complete' ? 'green' : 'gray'}
-              >
-                {selectedActivity.status}
-              </Badge>
+            <Group gap="xs">
+              <ThemeIcon variant="light" color="indigo" size="sm">
+                <IconChartBar size={16} />
+              </ThemeIcon>
+              <Text fw={700} size="sm">
+                Activity Volume
+              </Text>
             </Group>
 
-            <Divider />
+            {loading && <Group justify="center" py="xl"><Loader variant="dots" /></Group>}
 
-            {selectedVersion?.fields.map((field) => {
-              const val = selectedActivity.fieldValues.find(
-                (fv) => fv.fieldName === field.name,
-              )?.value
+            {!loading && activities.length === 0 && (
+              <Box py="xl" style={{ textAlign: 'center' }}>
+                <Text c="dimmed" size="sm">
+                  No activities recorded in the past 30 days.
+                </Text>
+              </Box>
+            )}
 
-              return (
-                <Stack key={field.name} gap={4}>
-                  <Group justify="space-between">
-                    <Text size="sm" fw={600}>
-                      {field.name}
-                    </Text>
-                    {field.type === 'Rating' && typeof val === 'number' && (
-                      <Rating value={val} count={field.ratingMax ?? 5} readOnly />
-                    )}
-                  </Group>
-                  {field.description && (
-                    <Text size="xs" c="dimmed">
-                      {field.description}
-                    </Text>
-                  )}
-                  {field.type !== 'Rating' && (
-                    <Text size="sm">{val === null || val === '' ? '—' : String(val)}</Text>
-                  )}
-                </Stack>
-              )
-            })}
-
-            {!selectedVersion && (
-              <Text size="sm" c="dimmed" fs="italic">
-                Routine definition not found for this version.
-              </Text>
+            {!loading && activities.length > 0 && (
+              <BarChart
+                h={200}
+                data={chartData}
+                dataKey="date"
+                type="stacked"
+                series={series}
+                withLegend
+                legendProps={{ verticalAlign: 'bottom', height: 40 }}
+                yAxisProps={{ allowDecimals: false, width: 30 }}
+                xAxisProps={{ tick: { fontSize: 10 }, interval: 'preserveStartEnd' }}
+                tickLine="y"
+                withTooltip
+                tooltipAnimationDuration={150}
+                barProps={{ radius: [4, 4, 0, 0] }}
+                gridAxis="none"
+              />
             )}
           </Stack>
-        )}
-      </Modal>
-    </Stack>
+        </Card>
+
+        {/* ── Activity list ─────────────────────────────────────── */}
+        <Stack gap="md">
+          <Group justify="space-between" align="center">
+            <Group gap="xs">
+              <ThemeIcon variant="light" color="indigo" size="sm">
+                <IconActivity size={16} />
+              </ThemeIcon>
+              <Text fw={700}>Logged Sessions</Text>
+            </Group>
+            <Select
+              size="xs"
+              placeholder="Filter by routine"
+              data={filterOptions}
+              value={filterRoutineId ?? 'all'}
+              onChange={setFilterRoutineId}
+              clearable={false}
+              radius="md"
+              w={160}
+            />
+          </Group>
+
+          {loading && <Group justify="center" py="xl"><Loader variant="dots" /></Group>}
+
+          {!loading && filteredActivities.length === 0 && (
+            <Card radius="lg" padding="xl" withBorder style={{ borderStyle: 'dashed', textAlign: 'center' }}>
+              <Text c="dimmed" size="sm">
+                No activities found matching your filter.
+              </Text>
+            </Card>
+          )}
+
+          <Stack gap="sm">
+            {filteredActivities.map((activity) => {
+              const routineTitle =
+                routineTitleById.get(activity.routineId) ?? `Routine ${activity.routineId}`
+              const color = colorByRoutineId.get(activity.routineId) ?? 'indigo'
+              const isToday = activity.date === today
+
+              return (
+                <Card
+                  key={activity.id}
+                  padding="md"
+                  radius="md"
+                  onClick={() => handleActivityClick(activity)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <Group justify="space-between" wrap="nowrap">
+                    <Stack gap={4}>
+                      <Group gap="xs" wrap="nowrap">
+                        <Text fw={700} size="sm">
+                          {routineTitle}
+                        </Text>
+                        <Badge 
+                          size="xs" 
+                          variant="light" 
+                          color={activity.status === 'complete' ? 'green' : 'gray'}
+                          radius="sm"
+                        >
+                          {activity.status}
+                        </Badge>
+                      </Group>
+                      <Group gap={4} c="dimmed">
+                        <IconCalendar size={12} />
+                        <Text size="xs" fw={500}>
+                          {isToday ? 'Today' : formatDateLabel(activity.date)}
+                        </Text>
+                      </Group>
+                    </Stack>
+                    <IconChevronRight size={18} c="dimmed" />
+                  </Group>
+                </Card>
+              )
+            })}
+          </Stack>
+        </Stack>
+
+        <Modal
+          opened={opened}
+          onClose={close}
+          title={
+            <Group gap="sm">
+               <ThemeIcon variant="light" color="indigo" radius="md">
+                  <IconActivity size={18} />
+               </ThemeIcon>
+               <Title order={4}>
+                {selectedVersion?.title ??
+                  routineTitleById.get(selectedActivity?.routineId ?? 0) ??
+                  'Activity Detail'}
+              </Title>
+            </Group>
+          }
+          size="lg"
+          radius="lg"
+          centered
+        >
+          {loadingDetail ? (
+            <Group justify="center" py="xl"><Loader variant="dots" /></Group>
+          ) : !selectedActivity ? (
+            <Text>No activity selected</Text>
+          ) : (
+            <Stack gap="lg">
+              <Group justify="space-between" bg="var(--mantine-color-gray-0)" p="md" style={{ borderRadius: 'var(--mantine-radius-md)' }}>
+                <Stack gap={0}>
+                  <Text size="xs" fw={700} c="dimmed" style={{ textTransform: 'uppercase' }}>
+                    Date Recorded
+                  </Text>
+                  <Text fw={600}>{formatDateLabel(selectedActivity.date)}</Text>
+                </Stack>
+                <Badge
+                  variant="filled"
+                  size="lg"
+                  color={selectedActivity.status === 'complete' ? 'green' : 'gray'}
+                >
+                  {selectedActivity.status.toUpperCase()}
+                </Badge>
+              </Group>
+
+              <Stack gap="md">
+                <Text size="sm" fw={700} c="indigo">FIELDS DATA</Text>
+                {selectedVersion?.fields.map((field) => {
+                  const val = selectedActivity.fieldValues.find(
+                    (fv) => fv.fieldName === field.name,
+                  )?.value
+
+                  return (
+                    <Card key={field.name} withBorder padding="sm" radius="md" bg="var(--mantine-color-body)">
+                      <Stack gap={4}>
+                        <Group justify="space-between">
+                          <Text size="sm" fw={700}>
+                            {field.name}
+                          </Text>
+                          {field.type === 'Rating' && typeof val === 'number' && (
+                            <Rating value={val} count={field.ratingMax ?? 5} readOnly size="sm" />
+                          )}
+                        </Group>
+                        {field.description && (
+                          <Text size="xs" c="dimmed">
+                            {field.description}
+                          </Text>
+                        )}
+                        {field.type !== 'Rating' && (
+                          <Text size="sm" fw={500}>{val === null || val === '' ? '—' : String(val)}</Text>
+                        )}
+                      </Stack>
+                    </Card>
+                  )
+                })}
+              </Stack>
+
+              {!selectedVersion && (
+                <Text size="sm" c="dimmed" fs="italic" ta="center">
+                  Routine definition not found for this version.
+                </Text>
+              )}
+            </Stack>
+          )}
+        </Modal>
+      </Stack>
+    </Container>
   )
 }

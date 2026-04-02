@@ -9,12 +9,17 @@ import {
   Stack,
   Text,
   Title,
+  Badge,
+  ThemeIcon,
+  Container,
 } from '@mantine/core'
 import {
   IconDotsVertical,
   IconEdit,
   IconPlus,
   IconTrash,
+  IconActivity,
+  IconChevronRight,
 } from '@tabler/icons-react'
 import { useNavigate } from 'react-router-dom'
 import { useRoutineStore } from '../store/routineStore'
@@ -28,91 +33,130 @@ export default function HomePage() {
   }, [fetchRoutines])
 
   return (
-    <Stack>
-      <Group justify="space-between">
-        <Title order={2}>My Routines</Title>
-        <Button leftSection={<IconPlus size={16} />} onClick={() => navigate('/routines/new')}>
-          New Routine
-        </Button>
-      </Group>
+    <Container size="sm" p={0}>
+      <Stack gap="xl">
+        <Group justify="space-between" align="flex-end">
+          <Stack gap={0}>
+            <Title order={2} style={{ fontWeight: 800 }}>My Routines</Title>
+            <Text c="dimmed" size="sm">Manage and track your daily habits</Text>
+          </Stack>
+        </Group>
 
-      {loading && <Loader />}
-
-      {!loading && routines.length === 0 && (
-        <Stack align="center" mt="xl" gap="md">
-          <Title order={3}>Welcome to Routine Tracker</Title>
-          <Text c="dimmed" ta="center" maw={480}>
-            Build and track your personal routines — all stored locally on your device.
-          </Text>
-          <Button size="md" onClick={() => navigate('/routines/new')}>
-            Create Your First Routine
-          </Button>
-        </Stack>
-      )}
-
-      {routines.map((routine) => (
-        <Card
-          key={routine.routineId}
-          shadow="sm"
-          padding="md"
-          radius="md"
-          withBorder
-          style={{ cursor: 'pointer' }}
-          onClick={() => navigate(`/routines/${routine.routineId}/record`)}
-        >
-          <Group justify="space-between" align="flex-start" wrap="nowrap">
-            <Stack gap={0} style={{ flex: 1 }}>
-              <Text fw={600}>{routine.title}</Text>
-              {routine.description && (
-                <Text size="sm" c="dimmed" mt={4}>
-                  {routine.description}
-                </Text>
-              )}
-            </Stack>
-
-            <Menu position="bottom-end" shadow="md" withinPortal>
-              <Menu.Target>
-                <ActionIcon
-                  variant="subtle"
-                  color="gray"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <IconDotsVertical size={16} />
-                </ActionIcon>
-              </Menu.Target>
-
-              <Menu.Dropdown onClick={(e) => e.stopPropagation()}>
-                <Menu.Item
-                  leftSection={<IconEdit size={14} />}
-                  onClick={() => navigate(`/routines/${routine.routineId}/edit`)}
-                >
-                  Edit
-                </Menu.Item>
-                <Menu.Item
-                  color="red"
-                  leftSection={<IconTrash size={14} />}
-                  onClick={() => {
-                    if (
-                      window.confirm(
-                        `Are you sure you want to delete "${routine.title}"?`
-                      )
-                    ) {
-                      void deleteRoutine(routine.routineId)
-                    }
-                  }}
-                >
-                  Delete
-                </Menu.Item>
-              </Menu.Dropdown>
-            </Menu>
+        {loading && (
+          <Group justify="center" py="xl">
+            <Loader variant="dots" />
           </Group>
+        )}
 
-          <Text size="xs" c="dimmed" mt={8}>
-            v{routine.version} &middot; {routine.fields.length} field
-            {routine.fields.length !== 1 ? 's' : ''}
-          </Text>
-        </Card>
-      ))}
-    </Stack>
+        {!loading && routines.length === 0 && (
+          <Card padding="xl" radius="lg" withBorder style={{ textAlign: 'center', borderStyle: 'dashed' }}>
+            <Stack align="center" gap="md">
+              <ThemeIcon size={64} radius="xl" variant="light" color="indigo">
+                <IconActivity size={32} />
+              </ThemeIcon>
+              <Title order={3}>No routines yet</Title>
+              <Text c="dimmed" ta="center" maw={400} mx="auto">
+                Build and track your personal routines — all stored locally on your device for privacy.
+              </Text>
+              <Button 
+                size="md" 
+                variant="gradient" 
+                gradient={{ from: 'indigo', to: 'cyan' }}
+                onClick={() => navigate('/routines/new')}
+                leftSection={<IconPlus size={18} />}
+                mt="md"
+              >
+                Create Your First Routine
+              </Button>
+            </Stack>
+          </Card>
+        )}
+
+        <Stack gap="md">
+          {routines.map((routine) => (
+            <Card
+              key={routine.routineId}
+              padding="lg"
+              radius="lg"
+              onClick={() => navigate(`/routines/${routine.routineId}/record`)}
+              style={{ cursor: 'pointer' }}
+            >
+              <Group justify="space-between" align="flex-start" wrap="nowrap">
+                <Group gap="md" align="flex-start" wrap="nowrap" style={{ flex: 1 }}>
+                  <ThemeIcon 
+                    size={40} 
+                    radius="md" 
+                    variant="light" 
+                    color="indigo"
+                  >
+                    <IconActivity size={22} />
+                  </ThemeIcon>
+                  <Stack gap={2} style={{ flex: 1 }}>
+                    <Text fw={700} size="lg">{routine.title}</Text>
+                    {routine.description && (
+                      <Text size="sm" c="dimmed" lineClamp={2}>
+                        {routine.description}
+                      </Text>
+                    )}
+                  </Stack>
+                </Group>
+
+                <Menu position="bottom-end" shadow="md" withinPortal>
+                  <Menu.Target>
+                    <ActionIcon
+                      variant="subtle"
+                      color="gray"
+                      onClick={(e) => e.stopPropagation()}
+                      size="lg"
+                    >
+                      <IconDotsVertical size={20} />
+                    </ActionIcon>
+                  </Menu.Target>
+
+                  <Menu.Dropdown onClick={(e) => e.stopPropagation()}>
+                    <Menu.Item
+                      leftSection={<IconEdit size={16} />}
+                      onClick={() => navigate(`/routines/${routine.routineId}/edit`)}
+                    >
+                      Edit Routine
+                    </Menu.Item>
+                    <Menu.Item
+                      color="red"
+                      leftSection={<IconTrash size={16} />}
+                      onClick={() => {
+                        if (
+                          window.confirm(
+                            `Are you sure you want to delete "${routine.title}"?`
+                          )
+                        ) {
+                          void deleteRoutine(routine.routineId)
+                        }
+                      }}
+                    >
+                      Delete Routine
+                    </Menu.Item>
+                  </Menu.Dropdown>
+                </Menu>
+              </Group>
+
+              <Group justify="space-between" mt="lg" align="center">
+                <Group gap="xs">
+                   <Badge variant="dot" color="indigo" size="sm">
+                    v{routine.version}
+                  </Badge>
+                  <Text size="xs" c="dimmed">
+                    {routine.fields.length} {routine.fields.length === 1 ? 'field' : 'fields'}
+                  </Text>
+                </Group>
+                <Group gap={4} c="indigo">
+                  <Text size="xs" fw={700}>RECORD</Text>
+                  <IconChevronRight size={14} stroke={3} />
+                </Group>
+              </Group>
+            </Card>
+          ))}
+        </Stack>
+      </Stack>
+    </Container>
   )
 }

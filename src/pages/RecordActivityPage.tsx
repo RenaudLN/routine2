@@ -3,9 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom'
 import {
   Button, Group, Loader, NumberInput, Rating, Select,
   Stack, Text, Textarea, TextInput, Title, Alert,
+  Container, Card, ThemeIcon, Box, Divider,
 } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
-import { IconArrowLeft, IconAlertCircle } from '@tabler/icons-react'
+import { IconArrowLeft, IconAlertCircle, IconCheck, IconDeviceFloppy, IconCalendar } from '@tabler/icons-react'
 import { useRoutineStore } from '../store/routineStore'
 import { useActivityStore, todayISO } from '../store/activityStore'
 import type { RoutineVersion, FieldValue } from '../types'
@@ -89,115 +90,139 @@ export default function RecordActivityPage() {
     }
   }
 
-  if (loadingRoutine) return <Loader />
+  if (loadingRoutine) return <Group justify="center" py="xl"><Loader variant="dots" /></Group>
 
   if (!routine) {
     return (
-      <Stack>
-        <Button variant="subtle" leftSection={<IconArrowLeft size={16} />}
-          onClick={() => navigate('/')} w="fit-content">Back</Button>
-        <Alert icon={<IconAlertCircle size={16} />} color="red">Routine not found.</Alert>
-      </Stack>
+      <Container size="sm" p={0}>
+        <Stack>
+          <Button variant="subtle" leftSection={<IconArrowLeft size={16} />}
+            onClick={() => navigate('/')} w="fit-content">Back</Button>
+          <Alert icon={<IconAlertCircle size={16} />} color="red" radius="md">Routine not found.</Alert>
+        </Stack>
+      </Container>
     )
   }
 
   return (
-    <Stack>
-      <Button variant="subtle" leftSection={<IconArrowLeft size={16} />}
-        onClick={() => navigate('/')} w="fit-content">
-        Back
-      </Button>
+    <Container size="sm" p={0}>
+      <Stack gap="xl">
+        <Stack gap="xs">
+          <Button variant="subtle" leftSection={<IconArrowLeft size={16} />}
+            onClick={() => navigate('/')} w="fit-content" p={0} h="auto" mb={4}>
+            Back
+          </Button>
+          <Title order={2} style={{ fontWeight: 800 }}>Record Session</Title>
+          <Text c="dimmed">{routine.title}</Text>
+        </Stack>
 
-      <Title order={2}>Record: {routine.title}</Title>
-      {routine.description && <Text c="dimmed">{routine.description}</Text>}
+        <Card radius="lg" padding="lg">
+          <Stack gap="lg">
+            <Group gap="xs" mb="xs">
+               <ThemeIcon variant="light" color="indigo" radius="md">
+                  <IconCalendar size={18} />
+               </ThemeIcon>
+               <Text fw={700}>Session Details</Text>
+            </Group>
 
-      {/* Activity date */}
-      <TextInput
-        label="Date"
-        description="Date of this activity"
-        type="date"
-        value={date}
-        onChange={(e) => setDate(e.currentTarget.value)}
-        required
-        maw={220}
-      />
+            <TextInput
+              label="Activity Date"
+              description="When did you do this?"
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.currentTarget.value)}
+              required
+              radius="md"
+              maw={300}
+            />
 
-      {routine.fields.length === 0 && (
-        <Text c="dimmed">This routine has no fields defined.</Text>
-      )}
+            <Divider />
 
-      {routine.fields.map((field) => {
-        const error = validationErrors[field.name]
-        const value = fieldValues[field.name]
+            {routine.fields.length === 0 && (
+              <Box py="md">
+                <Text c="dimmed" ta="center">This routine has no fields defined.</Text>
+              </Box>
+            )}
 
-        if (field.type === 'Text') {
-          return (
-            <Textarea key={field.name} label={field.name} description={field.description}
-              required={field.required} error={error}
-              value={typeof value === 'string' ? value : ''}
-              onChange={(e) => setField(field.name, e.currentTarget.value || null)}
-              autosize minRows={2} />
-          )
-        }
+            {routine.fields.map((field) => {
+              const error = validationErrors[field.name]
+              const value = fieldValues[field.name]
 
-        if (field.type === 'Number') {
-          return (
-            <NumberInput key={field.name} label={field.name} description={field.description}
-              required={field.required} error={error}
-              value={typeof value === 'number' ? value : ''}
-              onChange={(val) => setField(field.name, val === '' ? null : Number(val))}
-              maw={220} />
-          )
-        }
+              return (
+                <Box key={field.name}>
+                  {field.type === 'Text' && (
+                    <Textarea label={field.name} description={field.description}
+                      required={field.required} error={error}
+                      value={typeof value === 'string' ? value : ''}
+                      onChange={(e) => setField(field.name, e.currentTarget.value || null)}
+                      autosize minRows={2} radius="md" />
+                  )}
 
-        if (field.type === 'Rating') {
-          const max = field.ratingMax ?? 5
-          return (
-            <Stack key={field.name} gap={4}>
-              <Text size="sm" fw={500}>
-                {field.name}
-                {field.required && <Text component="span" c="red" ml={4}>*</Text>}
-              </Text>
-              {field.description && <Text size="xs" c="dimmed">{field.description}</Text>}
-              <Rating count={max} value={typeof value === 'number' ? value : 0}
-                onChange={(val) => setField(field.name, val === 0 ? null : val)} />
-              {error && <Text size="xs" c="red">{error}</Text>}
+                  {field.type === 'Number' && (
+                    <NumberInput label={field.name} description={field.description}
+                      required={field.required} error={error}
+                      value={typeof value === 'number' ? value : ''}
+                      onChange={(val) => setField(field.name, val === '' ? null : Number(val))}
+                      radius="md" maw={300} />
+                  )}
+
+                  {field.type === 'Rating' && (
+                    <Stack gap={4}>
+                      <Text size="sm" fw={500}>
+                        {field.name}
+                        {field.required && <Text component="span" c="red" ml={4}>*</Text>}
+                      </Text>
+                      {field.description && <Text size="xs" c="dimmed">{field.description}</Text>}
+                      <Rating count={field.ratingMax ?? 5} value={typeof value === 'number' ? value : 0}
+                        onChange={(val) => setField(field.name, val === 0 ? null : val)} size="lg" />
+                      {error && <Text size="xs" c="red">{error}</Text>}
+                    </Stack>
+                  )}
+
+                  {field.type === 'Date' && (
+                    <TextInput label={field.name} description={field.description}
+                      required={field.required} error={error} type="date"
+                      value={typeof value === 'string' ? value : ''}
+                      onChange={(e) => setField(field.name, e.currentTarget.value || null)}
+                      radius="md" maw={300} />
+                  )}
+
+                  {field.type === 'Option' && (
+                    <Select label={field.name} description={field.description}
+                      required={field.required} error={error}
+                      data={field.options ?? []}
+                      value={typeof value === 'string' ? value : null}
+                      onChange={(val) => setField(field.name, val)}
+                      clearable radius="md" maw={400} />
+                  )}
+                </Box>
+              )
+            })}
+
+            <Stack gap="sm" mt="md">
+              <Button 
+                size="md" 
+                radius="md" 
+                onClick={() => void handleSave('complete')} 
+                loading={saving}
+                leftSection={<IconCheck size={18} />}
+                variant="gradient"
+                gradient={{ from: 'indigo', to: 'cyan' }}
+              >
+                Complete & Save
+              </Button>
+              <Button 
+                variant="subtle" 
+                onClick={() => void handleSave('draft')} 
+                loading={saving}
+                leftSection={<IconDeviceFloppy size={18} />}
+              >
+                Save as Draft
+              </Button>
             </Stack>
-          )
-        }
-
-        if (field.type === 'Date') {
-          return (
-            <TextInput key={field.name} label={field.name} description={field.description}
-              required={field.required} error={error} type="date"
-              value={typeof value === 'string' ? value : ''}
-              onChange={(e) => setField(field.name, e.currentTarget.value || null)}
-              maw={220} />
-          )
-        }
-
-        if (field.type === 'Option') {
-          return (
-            <Select key={field.name} label={field.name} description={field.description}
-              required={field.required} error={error}
-              data={field.options ?? []}
-              value={typeof value === 'string' ? value : null}
-              onChange={(val) => setField(field.name, val)}
-              clearable maw={320} />
-          )
-        }
-
-        return null
-      })}
-
-      <Group mt="md">
-        <Button onClick={() => void handleSave('complete')} loading={saving}>
-          Save
-        </Button>
-        <Button variant="light" onClick={() => void handleSave('draft')} loading={saving}>
-          Save as Draft
-        </Button>
-      </Group>
-    </Stack>
+          </Stack>
+        </Card>
+      </Stack>
+    </Container>
   )
 }

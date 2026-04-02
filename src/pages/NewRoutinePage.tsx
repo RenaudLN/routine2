@@ -16,6 +16,10 @@ import {
   Textarea,
   TextInput,
   Title,
+  Container,
+  ThemeIcon,
+  Card,
+  Box,
 } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
 import {
@@ -23,6 +27,9 @@ import {
   IconGripVertical,
   IconPlus,
   IconTrash,
+  IconSettings,
+  IconListDetails,
+  IconCheck,
 } from '@tabler/icons-react'
 import { useRoutineStore } from '../store/routineStore'
 import type { FieldType, RoutineField } from '../types'
@@ -204,194 +211,231 @@ export default function NewRoutinePage() {
   if (loading) {
     return (
       <Group justify="center" py="xl">
-        <Loader />
+        <Loader variant="dots" />
       </Group>
     )
   }
 
   return (
-    <Stack maw={680} mx="auto">
-      {/* Header */}
-      <Group justify="space-between" align="center">
-        <Button
-          variant="subtle"
-          leftSection={<IconArrowLeft size={16} />}
-          onClick={() => navigate('/')}
-          w="fit-content"
-        >
-          Back
-        </Button>
-      </Group>
-
-      <Title order={2}>{isEdit ? 'Edit Routine' : 'New Routine'}</Title>
-
-      {/* Routine metadata */}
-      <Paper withBorder p="md" radius="md">
-        <Stack gap="sm">
-          <TextInput
-            label="Routine name"
-            placeholder="e.g. Morning check-in"
-            required
-            value={title}
-            onChange={(e) => {
-              setTitle(e.currentTarget.value)
-              if (e.currentTarget.value.trim()) setTitleError(null)
-            }}
-            error={titleError}
-          />
-          <Textarea
-            label="Description"
-            placeholder="Optional — describe what this routine is for"
-            autosize
-            minRows={2}
-            value={description}
-            onChange={(e) => setDescription(e.currentTarget.value)}
-          />
+    <Container size="sm" p={0}>
+      <Stack gap="xl">
+        {/* Header */}
+        <Stack gap="xs">
+          <Button
+            variant="subtle"
+            leftSection={<IconArrowLeft size={16} />}
+            onClick={() => navigate('/')}
+            w="fit-content"
+            p={0} h="auto" mb={4}
+          >
+            Back
+          </Button>
+          <Title order={2} style={{ fontWeight: 800 }}>
+             {isEdit ? 'Configure Routine' : 'New Routine'}
+          </Title>
+          <Text c="dimmed">
+             {isEdit ? 'Updates will create a new version of this routine.' : 'Define your routine structure.'}
+          </Text>
         </Stack>
-      </Paper>
 
-      {/* Fields */}
-      <Title order={4} mt="xs">
-        Fields
-      </Title>
-      <Text size="sm" c="dimmed" mt={-8}>
-        Define the data you want to capture each time you run this routine.
-      </Text>
+        <Card radius="lg" padding="lg">
+          <Stack gap="lg">
+             <Group gap="xs" mb="xs">
+               <ThemeIcon variant="light" color="indigo" radius="md">
+                  <IconSettings size={18} />
+               </ThemeIcon>
+               <Text fw={700}>Basic Info</Text>
+            </Group>
 
-      <Stack gap="sm">
-        {fields.map((field, idx) => (
-          <Paper key={field._key} withBorder p="md" radius="md">
-            <Stack gap="sm">
-              {/* Row 1: drag handle + name + type + remove */}
-              <Group align="flex-end" gap="sm" wrap="nowrap">
-                {/* Reorder buttons */}
-                <Stack gap={2} style={{ flexShrink: 0 }}>
-                  <ActionIcon
-                    variant="subtle"
-                    size="xs"
-                    disabled={idx === 0}
-                    onClick={() => moveField(field._key, 'up')}
-                    aria-label="Move field up"
-                  >
-                    <IconGripVertical size={12} />
-                  </ActionIcon>
-                  <ActionIcon
-                    variant="subtle"
-                    size="xs"
-                    disabled={idx === fields.length - 1}
-                    onClick={() => moveField(field._key, 'down')}
-                    aria-label="Move field down"
-                  >
-                    <IconGripVertical size={12} />
-                  </ActionIcon>
+            <TextInput
+              label="Routine Name"
+              placeholder="e.g. Morning check-in"
+              required
+              radius="md"
+              value={title}
+              onChange={(e) => {
+                setTitle(e.currentTarget.value)
+                if (e.currentTarget.value.trim()) setTitleError(null)
+              }}
+              error={titleError}
+            />
+            <Textarea
+              label="Description"
+              placeholder="Optional — describe what this routine is for"
+              autosize
+              minRows={2}
+              radius="md"
+              value={description}
+              onChange={(e) => setDescription(e.currentTarget.value)}
+            />
+          </Stack>
+        </Card>
+
+        {/* Fields */}
+        <Stack gap="md">
+           <Group justify="space-between" align="center">
+              <Group gap="xs">
+                <ThemeIcon variant="light" color="indigo" radius="md">
+                    <IconListDetails size={18} />
+                </ThemeIcon>
+                <Text fw={700}>Fields Configuration</Text>
+              </Group>
+           </Group>
+
+          <Stack gap="sm">
+            {fields.map((field, idx) => (
+              <Paper key={field._key} withBorder p="md" radius="md" style={{ position: 'relative' }}>
+                <Stack gap="sm">
+                  {/* Row 1: drag handle + name + type + remove */}
+                  <Group align="flex-start" gap="sm" wrap="nowrap">
+                    {/* Reorder buttons */}
+                    <Stack gap={2} style={{ flexShrink: 0 }} mt={24}>
+                      <ActionIcon
+                        variant="subtle"
+                        size="sm"
+                        disabled={idx === 0}
+                        onClick={() => moveField(field._key, 'up')}
+                        aria-label="Move field up"
+                      >
+                        <IconGripVertical size={14} />
+                      </ActionIcon>
+                      <ActionIcon
+                        variant="subtle"
+                        size="sm"
+                        disabled={idx === fields.length - 1}
+                        onClick={() => moveField(field._key, 'down')}
+                        aria-label="Move field down"
+                      >
+                        <IconGripVertical size={14} />
+                      </ActionIcon>
+                    </Stack>
+
+                    <Stack gap="xs" style={{ flex: 1 }}>
+                        <TextInput
+                          label="Field name"
+                          placeholder="e.g. Mood"
+                          radius="md"
+                          value={field.name}
+                          onChange={(e) =>
+                            updateField(field._key, { name: e.currentTarget.value })
+                          }
+                        />
+                        <Select
+                          label="Type"
+                          data={FIELD_TYPES}
+                          radius="md"
+                          value={field.type}
+                          onChange={(val) =>
+                            updateField(field._key, { type: (val as FieldType) ?? 'Text' })
+                          }
+                          allowDeselect={false}
+                        />
+                    </Stack>
+
+                    <ActionIcon
+                      color="red"
+                      variant="light"
+                      size="lg"
+                      radius="md"
+                      mt={24}
+                      onClick={() => removeField(field._key)}
+                      aria-label="Remove field"
+                      disabled={fields.length === 1}
+                    >
+                      <IconTrash size={18} />
+                    </ActionIcon>
+                  </Group>
+
+                  <Divider variant="dashed" />
+
+                  {/* Row 2: description + required */}
+                  <Group align="flex-end" gap="sm">
+                    <TextInput
+                      label="Description"
+                      placeholder="Optional hint for this field"
+                      radius="md"
+                      value={field.description ?? ''}
+                      onChange={(e) =>
+                        updateField(field._key, { description: e.currentTarget.value })
+                      }
+                      style={{ flex: 1 }}
+                    />
+                    <Checkbox
+                      label="Required"
+                      checked={field.required}
+                      onChange={(e) =>
+                        updateField(field._key, { required: e.currentTarget.checked })
+                      }
+                      mb={10}
+                    />
+                  </Group>
+
+                  {/* Row 3: type-specific options */}
+                  {field.type === 'Rating' && (
+                    <NumberInput
+                      label="Max rating"
+                      description="The highest value on the scale"
+                      min={2}
+                      max={100}
+                      radius="md"
+                      value={field.ratingMax ?? 5}
+                      onChange={(val) =>
+                        updateField(field._key, {
+                          ratingMax: typeof val === 'number' ? val : 5,
+                        })
+                      }
+                      w={160}
+                    />
+                  )}
+
+                  {field.type === 'Option' && (
+                    <TagsInput
+                      label="Options"
+                      description="Type an option and press Enter to add it"
+                      placeholder="Add option…"
+                      radius="md"
+                      value={field.options ?? []}
+                      onChange={(val) => updateField(field._key, { options: val })}
+                    />
+                  )}
                 </Stack>
+              </Paper>
+            ))}
+          </Stack>
 
-                <TextInput
-                  label="Field name"
-                  placeholder="e.g. Mood"
-                  value={field.name}
-                  onChange={(e) =>
-                    updateField(field._key, { name: e.currentTarget.value })
-                  }
-                  style={{ flex: 1 }}
-                />
+          <Button
+            variant="light"
+            leftSection={<IconPlus size={18} />}
+            onClick={addField}
+            fullWidth
+            radius="md"
+            size="md"
+            mt="xs"
+          >
+            Add Another Field
+          </Button>
+        </Stack>
 
-                <Select
-                  label="Type"
-                  data={FIELD_TYPES}
-                  value={field.type}
-                  onChange={(val) =>
-                    updateField(field._key, { type: (val as FieldType) ?? 'Text' })
-                  }
-                  w={130}
-                  allowDeselect={false}
-                />
+        <Divider />
 
-                <ActionIcon
-                  color="red"
-                  variant="light"
-                  size="lg"
-                  mt={24}
-                  onClick={() => removeField(field._key)}
-                  aria-label="Remove field"
-                  disabled={fields.length === 1}
-                >
-                  <IconTrash size={16} />
-                </ActionIcon>
-              </Group>
-
-              {/* Row 2: description + required */}
-              <Group align="flex-end" gap="sm">
-                <TextInput
-                  label="Description"
-                  placeholder="Optional hint for this field"
-                  value={field.description ?? ''}
-                  onChange={(e) =>
-                    updateField(field._key, { description: e.currentTarget.value })
-                  }
-                  style={{ flex: 1 }}
-                />
-                <Checkbox
-                  label="Required"
-                  checked={field.required}
-                  onChange={(e) =>
-                    updateField(field._key, { required: e.currentTarget.checked })
-                  }
-                  mb={6}
-                />
-              </Group>
-
-              {/* Row 3: type-specific options */}
-              {field.type === 'Rating' && (
-                <NumberInput
-                  label="Max rating"
-                  description="The highest value on the scale"
-                  min={2}
-                  max={100}
-                  value={field.ratingMax ?? 5}
-                  onChange={(val) =>
-                    updateField(field._key, {
-                      ratingMax: typeof val === 'number' ? val : 5,
-                    })
-                  }
-                  w={160}
-                />
-              )}
-
-              {field.type === 'Option' && (
-                <TagsInput
-                  label="Options"
-                  description="Type an option and press Enter to add it"
-                  placeholder="Add option…"
-                  value={field.options ?? []}
-                  onChange={(val) => updateField(field._key, { options: val })}
-                />
-              )}
-            </Stack>
-          </Paper>
-        ))}
+        {/* Actions */}
+        <Group justify="flex-end" pb="xl">
+          <Button variant="subtle" onClick={() => navigate('/')} radius="md">
+            Cancel
+          </Button>
+          <Button 
+            loading={saving} 
+            onClick={() => void handleSave()} 
+            radius="md" 
+            size="md"
+            variant="gradient"
+            gradient={{ from: 'indigo', to: 'cyan' }}
+            leftSection={<IconCheck size={18} />}
+          >
+            {isEdit ? 'Save New Version' : 'Create Routine'}
+          </Button>
+        </Group>
       </Stack>
-
-      <Button
-        variant="light"
-        leftSection={<IconPlus size={16} />}
-        onClick={addField}
-        w="fit-content"
-      >
-        Add field
-      </Button>
-
-      <Divider mt="sm" />
-
-      {/* Actions */}
-      <Group justify="flex-end" pb="xl">
-        <Button variant="default" onClick={() => navigate('/')}>
-          Cancel
-        </Button>
-        <Button loading={saving} onClick={() => void handleSave()}>
-          {isEdit ? 'Save new version' : 'Save routine'}
-        </Button>
-      </Group>
-    </Stack>
+    </Container>
   )
 }
