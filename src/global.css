@@ -1,0 +1,34 @@
+:root {
+  /* Prevent callouts and text selection for a more native feel */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  
+  /* Remove the grey tap highlight on mobile devices */
+  -webkit-tap-highlight-color: transparent;
+  
+  /* Optimize touch behavior */
+  touch-action: manipulation;
+}
+
+/* Allow text selection for specific elements where it's needed */
+input, textarea, [contenteditable], .selectable {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* Handle scroll bounce */
+body {
+  overscroll-behavior-y: none;
+  background-color: var(--mantine-color-body);
+}
+
+/* Ensure images don't get dragged around */
+img {
+  -webkit-user-drag: none;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}

@@ -91,15 +91,16 @@ export default function AppShellLayout() {
 
   return (
     <AppShell
-      header={{ height: 60 }}
-      footer={{ height: rem(76) + (parseInt(getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-bottom') || '0')) }}
+      header={{ height: "calc(60px + env(safe-area-inset-top))" }}
+      footer={{ height: 'calc(76px + env(safe-area-inset-bottom))' }}
       padding="md"
     >
       <AppShell.Header
         style={{
           borderBottom: '1px solid var(--mantine-color-default-border)',
           backgroundColor: 'rgba(var(--mantine-color-body-rgb), 0.8)',
-          backdropFilter: 'blur(10px)',
+          backdropFilter: "blur(10px)",
+          paddingTop: "env(safe-area-inset-top)",
         }}
       >
         <Group h="100%" px="md" justify="space-between">
@@ -124,7 +125,8 @@ export default function AppShellLayout() {
           borderTop: '1px solid var(--mantine-color-default-border)',
           paddingBottom: 'env(safe-area-inset-bottom)',
           backgroundColor: 'rgba(var(--mantine-color-body-rgb), 0.8)',
-          backdropFilter: 'blur(10px)',
+          backdropFilter: "blur(10px)",
+          paddingTop: "env(safe-area-inset-top)",
           height: 'auto',
         }}
       >
