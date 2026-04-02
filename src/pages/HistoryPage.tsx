@@ -256,14 +256,6 @@ export default function HistoryPage() {
                         <Text fw={700} size="sm">
                           {routineTitle}
                         </Text>
-                        <Badge 
-                          size="xs" 
-                          variant="light" 
-                          color={activity.status === 'complete' ? 'green' : 'gray'}
-                          radius="sm"
-                        >
-                          {activity.status}
-                        </Badge>
                       </Group>
                       <Group gap={4} c="dimmed">
                         <IconCalendar size={12} />
@@ -312,13 +304,6 @@ export default function HistoryPage() {
                   </Text>
                   <Text fw={600}>{formatDateLabel(selectedActivity.date)}</Text>
                 </Stack>
-                <Badge
-                  variant="filled"
-                  size="lg"
-                  color={selectedActivity.status === 'complete' ? 'green' : 'gray'}
-                >
-                  {selectedActivity.status.toUpperCase()}
-                </Badge>
               </Group>
 
               <Stack gap="md">

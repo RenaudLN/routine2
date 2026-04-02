@@ -76,8 +76,8 @@ export interface Activity {
   routineVersion: number
   /** ISO date string YYYY-MM-DD - user-chosen, defaults to today. */
   date: string
-  status: 'draft' | 'complete'
-  /** One entry per field; required fields may be null in draft status. */
+  status: 'complete'
+  /** One entry per field; all required fields are populated for completion. */
   fieldValues: FieldValue[]
   createdAt: Date
   updatedAt: Date

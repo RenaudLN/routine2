@@ -6,7 +6,7 @@ import {
   Container, Card, ThemeIcon, Box, Divider,
 } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
-import { IconArrowLeft, IconAlertCircle, IconCheck, IconDeviceFloppy, IconCalendar } from '@tabler/icons-react'
+import { IconArrowLeft, IconAlertCircle, IconCheck, IconCalendar } from '@tabler/icons-react'
 import { useRoutineStore } from '../store/routineStore'
 import { useActivityStore, todayISO } from '../store/activityStore'
 import type { RoutineVersion, FieldValue } from '../types'
@@ -63,8 +63,8 @@ export default function RecordActivityPage() {
   const buildFieldValues = (): FieldValue[] =>
     Object.entries(fieldValues).map(([fieldName, value]) => ({ fieldName, value }))
 
-  const handleSave = async (status: 'complete' | 'draft') => {
-    if (status === 'complete' && !validate()) return
+  const handleSave = async () => {
+    if (!validate()) return
     if (!routine) return
     setSaving(true)
     try {
@@ -72,15 +72,13 @@ export default function RecordActivityPage() {
         routineId: routine.routineId,
         routineVersion: routine.version,
         date,
-        status,
+        status: 'complete',
         fieldValues: buildFieldValues(),
       })
       notifications.show({
-        title: status === 'complete' ? 'Activity saved!' : 'Draft saved',
-        message: status === 'complete'
-          ? `${routine.title} recorded for ${date}.`
-          : `Draft saved for ${routine.title}.`,
-        color: status === 'complete' ? 'green' : 'blue',
+        title: 'Activity saved!',
+        message: `${routine.title} recorded for ${date}.`,
+        color: 'green',
       })
       navigate('/')
     } catch (err) {
@@ -203,21 +201,13 @@ export default function RecordActivityPage() {
               <Button 
                 size="md" 
                 radius="md" 
-                onClick={() => void handleSave('complete')} 
+                onClick={() => void handleSave()} 
                 loading={saving}
                 leftSection={<IconCheck size={18} />}
                 variant="gradient"
                 gradient={{ from: 'indigo', to: 'cyan' }}
               >
-                Complete & Save
-              </Button>
-              <Button 
-                variant="subtle" 
-                onClick={() => void handleSave('draft')} 
-                loading={saving}
-                leftSection={<IconDeviceFloppy size={18} />}
-              >
-                Save as Draft
+                Save Activity
               </Button>
             </Stack>
           </Stack>

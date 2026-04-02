@@ -40,7 +40,7 @@ interface ActivityState {
   fetchRecentActivities: (days?: number) => Promise<void>
 
   /**
-   * Create a new Activity (draft or complete).
+   * Create a new Activity.
    * date defaults to today if omitted.
    * Returns the new activity id.
    */
@@ -48,7 +48,7 @@ interface ActivityState {
     routineId: number
     routineVersion: number
     date?: string
-    status: 'draft' | 'complete'
+    status: 'complete'
     fieldValues: FieldValue[]
   }) => Promise<number>
 
@@ -125,7 +125,7 @@ export const useActivityStore = create<ActivityState>((set) => ({
       routineId,
       routineVersion,
       date: date ?? todayISO(),
-      status,
+      status: status ?? 'complete',
       fieldValues,
       createdAt: now,
       updatedAt: now,

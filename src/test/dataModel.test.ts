@@ -207,7 +207,7 @@ describe('activityStore', () => {
     const id = await addActivity({
       routineId: 1,
       routineVersion: 1,
-      status: 'draft',
+      status: 'complete',
       fieldValues: [],
     })
     expect(id).toBeGreaterThan(0)
