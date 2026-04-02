@@ -6,11 +6,9 @@ import {
   Title,
   UnstyledButton,
   ThemeIcon,
-  useMantineTheme,
   ActionIcon,
   useMantineColorScheme,
   Box,
-  rem,
 } from '@mantine/core'
 import { IconHome, IconPlus, IconHistory, IconSun, IconMoon } from '@tabler/icons-react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
@@ -87,7 +85,6 @@ function ThemeToggle() {
 export default function AppShellLayout() {
   const navigate = useNavigate()
   const location = useLocation()
-  const theme = useMantineTheme()
 
   return (
     <AppShell

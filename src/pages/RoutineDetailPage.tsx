@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Badge, Button, Group, Loader, Stack, Text, Title, Container, Card, ThemeIcon, Divider, Box } from '@mantine/core'
+import { Badge, Button, Group, Loader, Stack, Text, Title, Container, Card, ThemeIcon, Divider } from '@mantine/core'
 import { IconArrowLeft, IconTrash, IconSettings, IconListDetails, IconEdit } from '@tabler/icons-react'
 import { useRoutineStore } from '../store/routineStore'
 import type { RoutineVersion } from '../types'

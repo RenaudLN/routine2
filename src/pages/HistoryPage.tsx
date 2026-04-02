@@ -2,7 +2,6 @@ import '@mantine/charts/styles.css'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Badge,
   Card,
   Divider,
   Group,
@@ -249,7 +248,6 @@ export default function HistoryPage() {
             {filteredActivities.map((activity) => {
               const routineTitle =
                 routineTitleById.get(activity.routineId) ?? `Routine ${activity.routineId}`
-              const color = colorByRoutineId.get(activity.routineId) ?? 'indigo'
               const isToday = activity.date === today
 
               return (

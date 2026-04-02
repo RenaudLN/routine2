@@ -19,7 +19,6 @@ import {
   Container,
   ThemeIcon,
   Card,
-  Box,
 } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
 import {
