@@ -19,16 +19,6 @@ export const theme = createTheme({
       defaultProps: {
         radius: 'md',
         withBorder: true,
-        shadow: 'sm',
-      },
-      styles: {
-        root: {
-          transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-          '&:hover': {
-            transform: 'translateY(-2px)',
-            boxShadow: 'var(--mantine-shadow-md)',
-          },
-        },
       },
     },
     Button: {

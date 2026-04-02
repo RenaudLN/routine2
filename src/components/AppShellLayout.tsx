@@ -154,7 +154,6 @@ export default function AppShellLayout() {
                 size={54}
                 radius="xl"
                 style={{
-                  boxShadow: '0 8px 20px -4px var(--mantine-primary-color-light-color)',
                   border: '4px solid var(--mantine-color-body)',
                 }}
               >
