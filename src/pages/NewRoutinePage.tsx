@@ -36,6 +36,7 @@ import type { FieldType, RoutineField } from '../types'
 
 const FIELD_TYPES: { value: FieldType; label: string }[] = [
   { value: 'Text', label: 'Text' },
+  { value: 'LongText', label: 'Long text' },
   { value: 'Date', label: 'Date' },
   { value: 'Number', label: 'Number' },
   { value: 'Rating', label: 'Rating' },

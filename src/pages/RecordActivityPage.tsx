@@ -182,6 +182,14 @@ export default function RecordActivityPage() {
               return (
                 <Box key={field.name}>
                   {field.type === 'Text' && (
+                    <TextInput label={field.name} description={field.description}
+                      required={field.required} error={error}
+                      value={typeof value === 'string' ? value : ''}
+                      onChange={(e) => setField(field.name, e.currentTarget.value || null)}
+                      radius="md" />
+                  )}
+
+                  {field.type === 'LongText' && (
                     <Textarea label={field.name} description={field.description}
                       required={field.required} error={error}
                       value={typeof value === 'string' ? value : ''}

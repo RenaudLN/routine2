@@ -2,7 +2,7 @@
 // Field types
 // ---------------------------------------------------------------------------
 
-export type FieldType = 'Text' | 'Date' | 'Number' | 'Rating' | 'Option'
+export type FieldType = 'Text' | 'LongText' | 'Date' | 'Number' | 'Rating' | 'Option'
 
 /**
  * Definition of a single field within a Routine version.
