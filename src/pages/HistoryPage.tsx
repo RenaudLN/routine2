@@ -191,8 +191,8 @@ export default function HistoryPage() {
             value={viewMode}
             onChange={(v) => setViewMode(v as 'calendar' | 'list')}
             data={[
-              { label: <Group gap={4}><IconCalendarEvent size={14} />Calendar</Group>, value: 'calendar' },
-              { label: <Group gap={4}><IconList size={14} />List</Group>, value: 'list' },
+              { label: <Group gap={4} wrap="nowrap"><IconCalendarEvent size={14} />Calendar</Group>, value: 'calendar' },
+              { label: <Group gap={4} wrap="nowrap"><IconList size={14} />List</Group>, value: 'list' },
             ]}
           />
         </Group>
