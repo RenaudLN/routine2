@@ -155,15 +155,15 @@ export default function NewRoutinePage() {
     // Strip empty-name fields and clean up type-specific extras
     const cleanFields: RoutineField[] = fields
       .filter((f) => f.name.trim() !== '')
-      .map(({ _key, ...rest }) => {
+      .map((f) => {
         const field: RoutineField = {
-          name: rest.name.trim(),
-          type: rest.type,
-          required: rest.required,
+          name: f.name.trim(),
+          type: f.type,
+          required: f.required,
         }
-        if (rest.description?.trim()) field.description = rest.description.trim()
-        if (rest.type === 'Rating') field.ratingMax = rest.ratingMax ?? 5
-        if (rest.type === 'Option') field.options = rest.options ?? []
+        if (f.description?.trim()) field.description = f.description.trim()
+        if (f.type === 'Rating') field.ratingMax = f.ratingMax ?? 5
+        if (f.type === 'Option') field.options = f.options ?? []
         return field
       })
 

@@ -46,7 +46,7 @@ vi.mock('../db', () => {
           }
           return makeVersionsColl([])
         },
-        between: (_lower: unknown, _upper: unknown) => {
+        between: ( _lower: unknown) => {
           const routineId = (_lower as [number, unknown])[0]
           const records = Object.values(versionsStore)
             .filter((v) => v['routineId'] === routineId)
@@ -72,14 +72,14 @@ vi.mock('../db', () => {
       where: (index: string) => ({
         equals: (val: unknown) => ({
           reverse: () => ({
-            sortBy: (_field: string) =>
+            sortBy: () =>
               Promise.resolve(
                 Object.values(activitiesStore)
                   .filter((a) => a[index] === val)
                   .reverse(),
               ),
           }),
-          sortBy: (_field: string) =>
+          sortBy: () =>
             Promise.resolve(
               Object.values(activitiesStore).filter((a) => a[index] === val),
             ),

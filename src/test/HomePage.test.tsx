@@ -19,7 +19,7 @@ describe('HomePage', () => {
       renderWithProviders(<HomePage />)
     })
     expect(
-      await screen.findByText(/welcome to routine tracker/i)
+      await screen.findByText(/my routines/i)
     ).toBeInTheDocument()
   })
 

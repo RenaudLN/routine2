@@ -1,15 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Badge, Button, Group, Loader, Stack, Text, Title, Container, Card, ThemeIcon, Divider } from '@mantine/core'
 import { IconArrowLeft, IconTrash, IconSettings, IconListDetails, IconEdit } from '@tabler/icons-react'
 import { useRoutineStore } from '../store/routineStore'
-import type { RoutineVersion } from '../types'
 
 export default function RoutineDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { routines, fetchRoutines, deleteRoutine } = useRoutineStore()
-  const [routine, setRoutine] = useState<RoutineVersion | null>(null)
 
   useEffect(() => {
     if (routines.length === 0) {
@@ -17,14 +15,14 @@ export default function RoutineDetailPage() {
     }
   }, [routines.length, fetchRoutines])
 
-  useEffect(() => {
-    if (id === 'new') return
-    const found = routines.find((r) => r.routineId === Number(id))
-    setRoutine(found ?? null)
-  }, [id, routines])
+  const routine = id === 'new' ? null : (routines.find((r) => r.routineId === Number(id)) ?? null)
 
   if (!routine) {
-    return <Group justify="center" py="xl"><Loader variant="dots" /></Group>
+    return (
+      <Group justify="center" py="xl">
+        <Loader variant="dots" />
+      </Group>
+    )
   }
 
   const handleDelete = async () => {
