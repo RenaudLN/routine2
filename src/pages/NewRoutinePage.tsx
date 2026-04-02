@@ -59,7 +59,7 @@ function createDraftField(): DraftField {
 
 export default function NewRoutinePage() {
   const navigate = useNavigate()
-  const { id } = useParams()
+  const { id } = useParams<{ id?: string }>()
   const isEdit = !!id
   const { addRoutine, updateRoutine, fetchLatestVersion } = useRoutineStore()
 
@@ -71,7 +71,7 @@ export default function NewRoutinePage() {
   const [titleError, setTitleError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (isEdit) {
+    if (isEdit && id) {
       void (async () => {
         try {
           const latest = await fetchLatestVersion(Number(id))
@@ -97,10 +97,6 @@ export default function NewRoutinePage() {
       })()
     }
   }, [id, isEdit, fetchLatestVersion])
-
-  // ---------------------------------------------------------------------------
-  // Field helpers
-  // ---------------------------------------------------------------------------
 
   function updateField(key: string, patch: Partial<DraftField>) {
     setFields((prev) =>
@@ -128,10 +124,6 @@ export default function NewRoutinePage() {
     })
   }
 
-  // ---------------------------------------------------------------------------
-  // Validation
-  // ---------------------------------------------------------------------------
-
   function validate(): boolean {
     let valid = true
 
@@ -145,14 +137,9 @@ export default function NewRoutinePage() {
     return valid
   }
 
-  // ---------------------------------------------------------------------------
-  // Save
-  // ---------------------------------------------------------------------------
-
   async function handleSave() {
     if (!validate()) return
 
-    // Strip empty-name fields and clean up type-specific extras
     const cleanFields: RoutineField[] = fields
       .filter((f) => f.name.trim() !== '')
       .map((f) => {
@@ -169,7 +156,7 @@ export default function NewRoutinePage() {
 
     setSaving(true)
     try {
-      if (isEdit) {
+      if (isEdit && id) {
         await updateRoutine(Number(id), {
           title: title.trim(),
           description: description.trim() || undefined,
@@ -204,10 +191,6 @@ export default function NewRoutinePage() {
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // Render
-  // ---------------------------------------------------------------------------
-
   if (loading) {
     return (
       <Group justify="center" py="xl">
@@ -219,7 +202,6 @@ export default function NewRoutinePage() {
   return (
     <Container size="sm" p={0}>
       <Stack gap="xl">
-        {/* Header */}
         <Stack gap="xs">
           <Button
             variant="subtle"
@@ -271,7 +253,6 @@ export default function NewRoutinePage() {
           </Stack>
         </Card>
 
-        {/* Fields */}
         <Stack gap="md">
            <Group justify="space-between" align="center">
               <Group gap="xs">
@@ -286,9 +267,7 @@ export default function NewRoutinePage() {
             {fields.map((field, idx) => (
               <Paper key={field._key} withBorder p="md" radius="md" style={{ position: 'relative' }}>
                 <Stack gap="sm">
-                  {/* Row 1: drag handle + name + type + remove */}
                   <Group align="flex-start" gap="sm" wrap="nowrap">
-                    {/* Reorder buttons */}
                     <Stack gap={2} style={{ flexShrink: 0 }} mt={24}>
                       <ActionIcon
                         variant="subtle"
@@ -348,7 +327,6 @@ export default function NewRoutinePage() {
 
                   <Divider variant="dashed" />
 
-                  {/* Row 2: description + required */}
                   <Group align="flex-end" gap="sm">
                     <TextInput
                       label="Description"
@@ -370,7 +348,6 @@ export default function NewRoutinePage() {
                     />
                   </Group>
 
-                  {/* Row 3: type-specific options */}
                   {field.type === 'Rating' && (
                     <NumberInput
                       label="Max rating"
@@ -418,7 +395,6 @@ export default function NewRoutinePage() {
 
         <Divider />
 
-        {/* Actions */}
         <Group justify="flex-end" pb="xl">
           <Button variant="subtle" onClick={() => navigate('/')} radius="md">
             Cancel

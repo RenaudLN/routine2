@@ -143,7 +143,8 @@ export default function HistoryPage() {
   // Filtered activity list
   const filteredActivities = useMemo(() => {
     if (!filterRoutineId || filterRoutineId === 'all') return activities
-    return activities.filter((a) => a.routineId === Number(filterRoutineId))
+    const rid = Number(filterRoutineId)
+    return activities.filter((a) => a.routineId === rid)
   }, [activities, filterRoutineId])
 
   // Group activities by date for calendar view
@@ -201,47 +202,45 @@ export default function HistoryPage() {
             <Stack align="center" gap="md">
               <Calendar
                 size="md"
-                getDayProps={(date) => {
+                getDayProps={(date) => ({
+                  onClick: () => handleDayClick(date),
+                  style: {
+                    position: 'relative',
+                    height: 50,
+                    width: 50,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                  },
+                })}
+                renderDay={(date) => {
                   const iso = dayjs(date).format('YYYY-MM-DD')
                   const dayActivities = activitiesByDate.get(iso) ?? []
-                  return {
-                    onClick: () => handleDayClick(date),
-                    style: {
-                      position: 'relative',
-                      height: 50,
-                      width: 50,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'center',
-                    },
-                    children: (
-                      <Stack gap={2} align="center" style={{ width: '100%' }}>
-                        <Text size="sm">{date.getDate()}</Text>
-                        <Group gap={2} justify="center" wrap="nowrap" style={{ height: 16 }}>
-                          {(() => {
-                            const counts = new Map<number, number>()
-                            dayActivities.forEach(a => counts.set(a.routineId, (counts.get(a.routineId) || 0) + 1))
-                            return Array.from(counts.entries()).slice(0, 3).map(([rid, count]) => (
-                              <Badge 
-                                key={rid} 
-                                variant="filled" 
-                                color={colorByRoutineId.get(rid)} 
-                                size="xs" 
-                                p={0}
-                                circle
-                                style={{ width: 14, height: 14, minWidth: 14, fontSize: 8 }}
-                              >
-                                {count}
-                              </Badge>
-                            ))
-                          })()}
-                          {dayActivities.length > 3 && <Text size="10px" c="dimmed">+</Text>}
-                        </Group>
-                      </Stack>
-                    ),
-                  }
+                  const counts = new Map<number, number>()
+                  dayActivities.forEach(a => counts.set(a.routineId, (counts.get(a.routineId) || 0) + 1))
+                  
+                  return (
+                    <Stack gap={2} align="center" style={{ width: '100%' }}>
+                      <Text size="sm">{dayjs(date).date()}</Text>
+                      <Group gap={2} justify="center" wrap="nowrap" style={{ height: 16 }}>
+                        {Array.from(counts.entries()).slice(0, 3).map(([rid, count]) => (
+                          <Badge 
+                            key={rid} 
+                            variant="filled" 
+                            color={colorByRoutineId.get(rid) || 'gray'} 
+                            size="xs" 
+                            p={0}
+                            circle
+                            style={{ width: 14, height: 14, minWidth: 14, fontSize: 8 }}
+                          >
+                            {count}
+                          </Badge>
+                        ))}
+                        {dayActivities.length > 3 && <Text size="10px" c="dimmed">+</Text>}
+                      </Group>
+                    </Stack>
+                  )
                 }}
-                renderDay={() => null}
               />
             </Stack>
           </Card>
@@ -279,7 +278,7 @@ export default function HistoryPage() {
                 const routineTitle = routineTitleById.get(activity.routineId) ?? `Routine ${activity.routineId}`
                 const isToday = activity.date === today
                 return (
-                  <Card key={activity.id} padding="md" radius="md" onClick={() => handleActivityClick(activity)} style={{ cursor: 'pointer' }}>
+                  <Card key={activity.id ?? activity.createdAt.getTime()} padding="md" radius="md" onClick={() => handleActivityClick(activity)} style={{ cursor: 'pointer' }}>
                     <Group justify="space-between" wrap="nowrap">
                       <Stack gap={4}>
                         <Text fw={700} size="sm">{routineTitle}</Text>
@@ -356,7 +355,7 @@ export default function HistoryPage() {
                   <Stack gap="xs">
                     {activitiesForSelectedDay.map((a) => (
                       <Card 
-                        key={a.id} 
+                        key={a.id ?? a.createdAt.getTime()} 
                         withBorder 
                         padding="sm" 
                         radius="md" 
@@ -460,7 +459,11 @@ export default function HistoryPage() {
                   variant="subtle"
                   color="red"
                   leftSection={<IconTrash size={16} />}
-                  onClick={() => handleDelete(selectedActivity.id!)}
+                  onClick={() => {
+                    if (selectedActivity.id) {
+                      void handleDelete(selectedActivity.id)
+                    }
+                  }}
                 >
                   Delete
                 </Button>

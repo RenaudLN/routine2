@@ -12,7 +12,11 @@ import { useActivityStore, todayISO } from '../store/activityStore'
 import type { RoutineVersion, FieldValue } from '../types'
 
 export default function RecordActivityPage() {
-  const { id, activityId } = useParams<{ id?: string, activityId?: string }>(); const [searchParams] = useSearchParams(); const queryDate = searchParams.get("date")
+  const params = useParams<{ id?: string, activityId?: string }>()
+  const id = params.id
+  const activityId = params.activityId
+  const [searchParams] = useSearchParams()
+  const queryDate = searchParams.get("date")
   const navigate = useNavigate()
   const { fetchLatestVersion, fetchSpecificVersion } = useRoutineStore()
   const { addActivity, updateActivity, fetchActivityById } = useActivityStore()
@@ -45,13 +49,15 @@ export default function RecordActivityPage() {
           }
         } else if (id) {
           const version = await fetchLatestVersion(Number(id))
-          setRoutine(version)
+          setRoutine(version ?? null)
           if (version) {
             const initial: Record<string, string | number | null> = {}
             for (const field of version.fields) initial[field.name] = null
             setFieldValues(initial)
           }
         }
+      } catch (err) {
+        console.error('Failed to load activity data', err)
       } finally {
         setLoading(false)
       }

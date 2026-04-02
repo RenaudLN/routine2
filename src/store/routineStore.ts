@@ -63,15 +63,15 @@ export const useRoutineStore = create<RoutineState>((set) => ({
   addRoutine: async ({ title, description, fields }) => {
     const now = new Date()
     const routineId = (await db.routines.add({ createdAt: now })) as number
-  await db.routineVersions.add({
-    routineId,
-    version: 1,
-    title,
-    description,
-    fields,
-    createdAt: now,
-    isLatest: true as unknown as boolean,
-  })
+    await db.routineVersions.add({
+      routineId,
+      version: 1,
+      title,
+      description,
+      fields,
+      createdAt: now,
+      isLatest: true,
+    })
     const routines = await loadLatestVersions()
     set({ routines })
     return routineId
@@ -86,18 +86,18 @@ export const useRoutineStore = create<RoutineState>((set) => ({
         .between([routineId, Dexie.minKey], [routineId, Dexie.maxKey])
         .last()
       if (!current) throw new Error(`No version found for routineId ${routineId}`)
-    await db.routineVersions.update(current.id!, {
-      isLatest: false as unknown as boolean,
-    })
-    await db.routineVersions.add({
-      routineId,
-      version: current.version + 1,
-      title,
-      description,
-      fields,
-      createdAt: now,
-      isLatest: true as unknown as boolean,
-    })
+      await db.routineVersions.update(current.id!, {
+        isLatest: false,
+      })
+      await db.routineVersions.add({
+        routineId,
+        version: current.version + 1,
+        title,
+        description,
+        fields,
+        createdAt: now,
+        isLatest: true,
+      })
     })
     const routines = await loadLatestVersions()
     set({ routines })

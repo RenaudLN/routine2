@@ -15,7 +15,7 @@ export default function RoutineDetailPage() {
     }
   }, [routines.length, fetchRoutines])
 
-  const routine = id === 'new' ? null : (routines.find((r) => r.routineId === Number(id)) ?? null)
+  const routine = id ? (routines.find((r) => r.routineId === Number(id)) ?? null) : null
 
   if (!routine) {
     return (
