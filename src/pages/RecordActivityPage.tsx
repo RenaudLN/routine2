@@ -12,32 +12,52 @@ import { useActivityStore, todayISO } from '../store/activityStore'
 import type { RoutineVersion, FieldValue } from '../types'
 
 export default function RecordActivityPage() {
-  const { id } = useParams<{ id: string }>()
+  const { id, activityId } = useParams<{ id?: string, activityId?: string }>()
   const navigate = useNavigate()
-  const { fetchLatestVersion } = useRoutineStore()
-  const { addActivity } = useActivityStore()
+  const { fetchLatestVersion, fetchSpecificVersion } = useRoutineStore()
+  const { addActivity, updateActivity, fetchActivityById } = useActivityStore()
 
   const [routine, setRoutine] = useState<RoutineVersion | null>(null)
-  const [loadingRoutine, setLoadingRoutine] = useState(true)
+  const [loading, setLoading] = useState(true)
   const [date, setDate] = useState<string>(todayISO())
   const [fieldValues, setFieldValues] = useState<Record<string, string | number | null>>({})
   const [saving, setSaving] = useState(false)
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {
-    if (!id) return
-    setLoadingRoutine(true)
-    fetchLatestVersion(Number(id))
-      .then((version) => {
-        setRoutine(version)
-        if (version) {
-          const initial: Record<string, string | number | null> = {}
-          for (const field of version.fields) initial[field.name] = null
-          setFieldValues(initial)
+    const loadData = async () => {
+      setLoading(true)
+      try {
+        if (activityId) {
+          const activity = await fetchActivityById(Number(activityId))
+          if (activity) {
+            setDate(activity.date)
+            const version = await fetchSpecificVersion(activity.routineId, activity.routineVersion)
+            setRoutine(version ?? null)
+            if (version) {
+              const initial: Record<string, string | number | null> = {}
+              for (const field of version.fields) {
+                const found = activity.fieldValues.find((fv) => fv.fieldName === field.name)
+                initial[field.name] = found ? found.value : null
+              }
+              setFieldValues(initial)
+            }
+          }
+        } else if (id) {
+          const version = await fetchLatestVersion(Number(id))
+          setRoutine(version)
+          if (version) {
+            const initial: Record<string, string | number | null> = {}
+            for (const field of version.fields) initial[field.name] = null
+            setFieldValues(initial)
+          }
         }
-      })
-      .finally(() => setLoadingRoutine(false))
-  }, [id, fetchLatestVersion])
+      } finally {
+        setLoading(false)
+      }
+    }
+    void loadData()
+  }, [id, activityId, fetchLatestVersion, fetchSpecificVersion, fetchActivityById])
 
   const setField = (name: string, value: string | number | null) => {
     setFieldValues((prev) => ({ ...prev, [name]: value }))
@@ -68,19 +88,32 @@ export default function RecordActivityPage() {
     if (!routine) return
     setSaving(true)
     try {
-      await addActivity({
-        routineId: routine.routineId,
-        routineVersion: routine.version,
-        date,
-        status: 'complete',
-        fieldValues: buildFieldValues(),
-      })
-      notifications.show({
-        title: 'Activity saved!',
-        message: `${routine.title} recorded for ${date}.`,
-        color: 'green',
-      })
-      navigate('/')
+      if (activityId) {
+        await updateActivity(Number(activityId), {
+          date,
+          fieldValues: buildFieldValues(),
+        })
+        notifications.show({
+          title: 'Activity updated!',
+          message: `${routine.title} for ${date} has been updated.`,
+          color: 'green',
+        })
+        navigate('/history')
+      } else {
+        await addActivity({
+          routineId: routine.routineId,
+          routineVersion: routine.version,
+          date,
+          status: 'complete',
+          fieldValues: buildFieldValues(),
+        })
+        notifications.show({
+          title: 'Activity saved!',
+          message: `${routine.title} recorded for ${date}.`,
+          color: 'green',
+        })
+        navigate('/')
+      }
     } catch (err) {
       notifications.show({ title: 'Error', message: String(err), color: 'red' })
     } finally {
@@ -88,15 +121,15 @@ export default function RecordActivityPage() {
     }
   }
 
-  if (loadingRoutine) return <Group justify="center" py="xl"><Loader variant="dots" /></Group>
+  if (loading) return <Group justify="center" py="xl"><Loader variant="dots" /></Group>
 
   if (!routine) {
     return (
       <Container size="sm" p={0}>
         <Stack>
           <Button variant="subtle" leftSection={<IconArrowLeft size={16} />}
-            onClick={() => navigate('/')} w="fit-content">Back</Button>
-          <Alert icon={<IconAlertCircle size={16} />} color="red" radius="md">Routine not found.</Alert>
+            onClick={() => navigate(-1)} w="fit-content">Back</Button>
+          <Alert icon={<IconAlertCircle size={16} />} color="red" radius="md">Routine or Activity not found.</Alert>
         </Stack>
       </Container>
     )
@@ -107,10 +140,10 @@ export default function RecordActivityPage() {
       <Stack gap="xl">
         <Stack gap="xs">
           <Button variant="subtle" leftSection={<IconArrowLeft size={16} />}
-            onClick={() => navigate('/')} w="fit-content" p={0} h="auto" mb={4}>
+            onClick={() => navigate(-1)} w="fit-content" p={0} h="auto" mb={4}>
             Back
           </Button>
-          <Title order={2} style={{ fontWeight: 800 }}>Record Session</Title>
+          <Title order={2} style={{ fontWeight: 800 }}>{activityId ? 'Edit Session' : 'Record Session'}</Title>
           <Text c="dimmed">{routine.title}</Text>
         </Stack>
 
@@ -207,7 +240,7 @@ export default function RecordActivityPage() {
                 variant="gradient"
                 gradient={{ from: 'indigo', to: 'cyan' }}
               >
-                Save Activity
+                {activityId ? 'Update Activity' : 'Save Activity'}
               </Button>
             </Stack>
           </Stack>

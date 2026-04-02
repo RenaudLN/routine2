@@ -28,6 +28,8 @@ interface RoutineState {
   fetchVersions: (routineId: number) => Promise<RoutineVersion[]>
   /** Returns the latest version for a given routineId, or null if not found. */
   fetchLatestVersion: (routineId: number) => Promise<RoutineVersion | null>
+  /** Returns a specific version for a given routineId, or null if not found. */
+  fetchSpecificVersion: (routineId: number, version: number) => Promise<RoutineVersion | null>
 }
 
 /** Loads all non-deleted latest versions, ordered by createdAt desc. */
@@ -120,6 +122,15 @@ export const useRoutineStore = create<RoutineState>((set) => ({
       .where('[routineId+version]')
       .between([routineId, Dexie.minKey], [routineId, Dexie.maxKey])
       .toArray()
+  },
+
+  fetchSpecificVersion: async (routineId, versionNum) => {
+    if (!routineId || !versionNum) return null
+    const version = await db.routineVersions
+      .where("[routineId+version]")
+      .equals([routineId, versionNum])
+      .first()
+    return version ?? null
   },
 
   fetchLatestVersion: async (routineId) => {

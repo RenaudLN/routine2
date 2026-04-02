@@ -1,5 +1,6 @@
 import '@mantine/charts/styles.css'
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Badge,
   Card,
@@ -15,10 +16,11 @@ import {
   Container,
   ThemeIcon,
   Box,
+  Button,
 } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { BarChart } from '@mantine/charts'
-import { IconCalendar, IconChartBar, IconChevronRight, IconActivity } from '@tabler/icons-react'
+import { IconCalendar, IconChartBar, IconChevronRight, IconActivity, IconEdit, IconTrash } from '@tabler/icons-react'
 import { useActivityStore } from '../store/activityStore'
 import { useRoutineStore } from '../store/routineStore'
 import { daysAgoISO, todayISO } from '../store/activityStore'
@@ -53,7 +55,8 @@ function buildDateRange(days: number): string[] {
 }
 
 export default function HistoryPage() {
-  const { activities, loading, fetchRecentActivities } = useActivityStore()
+  const navigate = useNavigate()
+  const { activities, loading, fetchRecentActivities, deleteActivity } = useActivityStore()
   const { routines, fetchRoutines, fetchVersions } = useRoutineStore()
   const [filterRoutineId, setFilterRoutineId] = useState<string | null>(null)
 
@@ -72,6 +75,13 @@ export default function HistoryPage() {
       setSelectedVersion(version ?? null)
     } finally {
       setLoadingDetail(false)
+    }
+  }
+
+  const handleDelete = async (id: number) => {
+    if (window.confirm('Are you sure you want to delete this activity?')) {
+      await deleteActivity(id)
+      close()
     }
   }
 
@@ -343,6 +353,26 @@ export default function HistoryPage() {
                   Routine definition not found for this version.
                 </Text>
               )}
+
+              <Divider my="md" />
+              <Group justify="flex-end" gap="sm">
+                <Button
+                  variant="subtle"
+                  color="red"
+                  leftSection={<IconTrash size={16} />}
+                  onClick={() => handleDelete(selectedActivity.id!)}
+                >
+                  Delete
+                </Button>
+                <Button
+                  variant="light"
+                  color="indigo"
+                  leftSection={<IconEdit size={16} />}
+                  onClick={() => navigate(`/activities/${selectedActivity.id}/edit`)}
+                >
+                  Edit
+                </Button>
+              </Group>
             </Stack>
           )}
         </Modal>

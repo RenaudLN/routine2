@@ -39,6 +39,9 @@ interface ActivityState {
    */
   fetchRecentActivities: (days?: number) => Promise<void>
 
+  /** Fetch a single activity by id. */
+  fetchActivityById: (id: number) => Promise<Activity | undefined>
+
   /**
    * Create a new Activity.
    * date defaults to today if omitted.
@@ -116,6 +119,10 @@ export const useActivityStore = create<ActivityState>((set) => ({
     } catch (err) {
       set({ error: String(err), loading: false })
     }
+  },
+
+  fetchActivityById: async (id) => {
+    return await db.activities.get(id)
   },
 
   addActivity: async ({ routineId, routineVersion, date, status, fieldValues }) => {

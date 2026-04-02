@@ -17,6 +17,7 @@ export const router = createBrowserRouter([
       { path: 'routines/:id', element: <RoutineDetailPage /> },
       { path: 'routines/:id/edit', element: <NewRoutinePage /> },
       { path: 'routines/:id/record', element: <RecordActivityPage /> },
+      { path: 'activities/:activityId/edit', element: <RecordActivityPage /> },
       { path: 'history', element: <HistoryPage /> },
     ],
   },
