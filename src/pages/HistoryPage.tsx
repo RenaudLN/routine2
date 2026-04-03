@@ -30,7 +30,7 @@ import {
   IconTrash,
   IconPlus,
   IconList,
-  IconCalendarEvent,
+  IconCalendarEvent, IconFilter,
 } from '@tabler/icons-react'
 import dayjs from 'dayjs'
 import { useActivityStore } from '../store/activityStore'
@@ -147,16 +147,23 @@ export default function HistoryPage() {
     return activities.filter((a) => a.routineId === rid)
   }, [activities, filterRoutineId])
 
+  // Determine which routine IDs to show in the legend
+  const legendRoutineIds = useMemo(() => {
+    if (!filterRoutineId || filterRoutineId === 'all') return activeRoutineIds
+    const rid = Number(filterRoutineId)
+    return activeRoutineIds.filter((id) => id === rid)
+  }, [activeRoutineIds, filterRoutineId])
+
   // Group activities by date for calendar view
   const activitiesByDate = useMemo(() => {
     const map = new Map<string, Activity[]>()
-    for (const a of activities) {
+    for (const a of filteredActivities) {
       const list = map.get(a.date) ?? []
       list.push(a)
       map.set(a.date, list)
     }
     return map
-  }, [activities])
+  }, [filteredActivities])
 
   const today = todayISO()
 
@@ -194,6 +201,26 @@ export default function HistoryPage() {
               { label: <Group gap={4} wrap="nowrap"><IconCalendarEvent size={14} />Calendar</Group>, value: 'calendar' },
               { label: <Group gap={4} wrap="nowrap"><IconList size={14} />List</Group>, value: 'list' },
             ]}
+          />
+        </Group>
+
+        <Group justify="space-between" align="center">
+          <Group gap="xs">
+            <ThemeIcon variant="light" color="indigo" size="sm">
+              {viewMode === 'calendar' ? <IconCalendarEvent size={16} /> : <IconActivity size={16} />}
+            </ThemeIcon>
+            <Text fw={700}>{viewMode === 'calendar' ? 'Activity Calendar' : 'Logged Sessions'}</Text>
+          </Group>
+          <Select
+            size="xs"
+            placeholder="Filter"
+            data={filterOptions}
+            value={filterRoutineId ?? 'all'}
+            onChange={setFilterRoutineId}
+            clearable={false}
+            radius="md"
+            w={160}
+            leftSection={<IconFilter size={14} />}
           />
         </Group>
 
@@ -242,29 +269,28 @@ export default function HistoryPage() {
                   )
                 }}
               />
+
+              {legendRoutineIds.length > 0 && (
+                <Group gap="xs" justify="center" wrap="wrap" mt="sm">
+                  {legendRoutineIds.map((id) => (
+                    <Group key={id} gap={6}>
+                      <Badge
+                        color={colorByRoutineId.get(id) || 'gray'}
+                        size="xs"
+                        circle
+                        style={{ width: 10, height: 10, minWidth: 10 }}
+                      />
+                      <Text size="xs" c="dimmed">
+                        {routineTitleById.get(id) || `Routine ${id}`}
+                      </Text>
+                    </Group>
+                  ))}
+                </Group>
+              )}
             </Stack>
           </Card>
         ) : (
           <Stack gap="md">
-            <Group justify="space-between" align="center">
-              <Group gap="xs">
-                <ThemeIcon variant="light" color="indigo" size="sm">
-                  <IconActivity size={16} />
-                </ThemeIcon>
-                <Text fw={700}>Logged Sessions</Text>
-              </Group>
-              <Select
-                size="xs"
-                placeholder="Filter"
-                data={filterOptions}
-                value={filterRoutineId ?? 'all'}
-                onChange={setFilterRoutineId}
-                clearable={false}
-                radius="md"
-                w={140}
-              />
-            </Group>
-
             {loading && <Group justify="center" py="xl"><Loader variant="dots" /></Group>}
 
             {!loading && filteredActivities.length === 0 && (
