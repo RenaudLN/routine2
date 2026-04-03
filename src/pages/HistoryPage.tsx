@@ -297,70 +297,70 @@ export default function HistoryPage() {
         </Group>
 
         {viewMode === 'calendar' ? (
-          <Card radius="lg" padding="md" withBorder>
-            <Stack align="center" gap="md">
-              <Calendar
-                size="md"
-                getDayProps={(date) => ({
-                  onClick: () => handleDayClick(new Date(date)),
-                  style: {
-                    position: 'relative',
-                    height: 50,
-                    width: 50,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                  },
-                })}
-                renderDay={(date) => {
-                  const iso = dayjs(date).format('YYYY-MM-DD')
-                  const dayActivities = activitiesByDate.get(iso) ?? []
-                  const counts = new Map<number, number>()
-                  dayActivities.forEach(a => counts.set(a.routineId, (counts.get(a.routineId) || 0) + 1))
-                  
-                  return (
-                    <Stack gap={2} align="center" style={{ width: '100%' }}>
-                      <Text size="sm">{dayjs(date).date()}</Text>
-                      <Group gap={2} justify="center" wrap="nowrap" style={{ height: 16 }}>
-                        {Array.from(counts.entries()).slice(0, 3).map(([rid, count]) => (
-                          <Badge 
-                            key={rid} 
-                            variant="filled" 
-                            color={colorByRoutineId.get(rid) || 'gray'} 
-                            size="xs" 
-                            p={0}
-                            circle
-                            style={{ width: 14, height: 14, minWidth: 14, fontSize: 8 }}
-                          >
-                            {count}
-                          </Badge>
-                        ))}
-                        {dayActivities.length > 3 && <Text size="10px" c="dimmed">+</Text>}
-                      </Group>
-                    </Stack>
-                  )
-                }}
-              />
-
-              {legendRoutineIds.length > 0 && (
-                <Group gap="xs" justify="center" wrap="wrap" mt="sm">
-                  {legendRoutineIds.map((id) => (
-                    <Group key={id} gap={6}>
-                      <Badge
-                        color={colorByRoutineId.get(id) || 'gray'}
-                        size="xs"
-                        circle
-                        style={{ width: 10, height: 10, minWidth: 10 }}
-                      />
-                      <Text size="xs" c="dimmed">
-                        {routineTitleById.get(id) || `Routine ${id}`}
-                      </Text>
+          <Stack gap="md">
+            <Calendar
+              size="md" w="100%" style={{ maxWidth: "none" }} styles={{
+                month: { width: "100%", tableLayout: "fixed" },
+                calendarHeader: { width: "100%", maxWidth: "none" }
+              }}
+              getDayProps={(date) => ({
+                onClick: () => handleDayClick(new Date(date)),
+                style: {
+                  position: 'relative',
+                  height: 72,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                },
+              })}
+              renderDay={(date) => {
+                const iso = dayjs(date).format('YYYY-MM-DD')
+                const dayActivities = activitiesByDate.get(iso) ?? []
+                const counts = new Map<number, number>()
+                dayActivities.forEach(a => counts.set(a.routineId, (counts.get(a.routineId) || 0) + 1))
+                
+                return (
+                  <Stack gap={2} align="center" style={{ width: '100%' }}>
+                    <Text size="sm">{dayjs(date).date()}</Text>
+                    <Group gap={2} justify="center" wrap="nowrap" style={{ height: 16 }}>
+                      {Array.from(counts.entries()).slice(0, 3).map(([rid, count]) => (
+                        <Badge 
+                          key={rid} 
+                          variant="filled" 
+                          color={colorByRoutineId.get(rid) || 'gray'} 
+                          size="xs" 
+                          p={0}
+                          circle
+                          style={{ width: 14, height: 14, minWidth: 14, fontSize: 8 }}
+                        >
+                          {count}
+                        </Badge>
+                      ))}
+                      {dayActivities.length > 3 && <Text size="10px" c="dimmed">+</Text>}
                     </Group>
-                  ))}
-                </Group>
-              )}
-            </Stack>
-          </Card>
+                  </Stack>
+                )
+              }}
+            />
+
+            {legendRoutineIds.length > 0 && (
+              <Group gap="xs" justify="center" wrap="wrap" mt="sm">
+                {legendRoutineIds.map((id) => (
+                  <Group key={id} gap={6}>
+                    <Badge
+                      color={colorByRoutineId.get(id) || 'gray'}
+                      size="xs"
+                      circle
+                      style={{ width: 10, height: 10, minWidth: 10 }}
+                    />
+                    <Text size="xs" c="dimmed">
+                      {routineTitleById.get(id) || `Routine ${id}`}
+                    </Text>
+                  </Group>
+                ))}
+              </Group>
+            )}
+          </Stack>
         ) : (
           <Stack gap="md">
             {loading && <Group justify="center" py="xl"><Loader variant="dots" /></Group>}
