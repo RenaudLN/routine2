@@ -1,0 +1,1 @@
+Make sure to check new code changes by running `pnpm lint` and fixing errors as needed.
