@@ -176,7 +176,7 @@ describe('routineStore', () => {
   it('fetchRoutines only returns the latest non-deleted version per routine', async () => {
     const { addRoutine, updateRoutine, fetchRoutines } = useRoutineStore.getState()
     const id = await addRoutine({ title: 'Workout', fields: [] })
-    await updateRoutine(id, { title: 'Workout v2', fields: [] })
+    await updateRoutine(id, { title: 'Workout v2', fields: [{ name: 'New Field', type: 'Text', required: false }] })
     await fetchRoutines()
     const { routines } = useRoutineStore.getState()
     const match = routines.filter((r) => r.routineId === id)

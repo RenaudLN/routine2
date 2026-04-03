@@ -42,6 +42,39 @@ async function loadLatestVersions(): Promise<RoutineSummary[]> {
   return filtered.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
 }
 
+function areOptionsEqual(a?: string[], b?: string[]): boolean {
+  if (!a && !b) return true
+  if (!a || !b) return false
+  if (a.length !== b.length) return false
+  return a.every((val, index) => val === b[index])
+}
+
+function checkIsLightChange(
+  current: RoutineVersion,
+  newData: { title: string; description?: string; fields: RoutineField[] },
+): boolean {
+  if (current.fields.length !== newData.fields.length) return false
+
+  const currentFieldsMap = new Map(current.fields.map((f) => [f.name, f]))
+
+  for (const newField of newData.fields) {
+    const currentField = currentFieldsMap.get(newField.name)
+    if (!currentField) return false
+
+    if (
+      currentField.type !== newField.type ||
+      currentField.description !== newField.description ||
+      currentField.required !== newField.required ||
+      currentField.ratingMax !== newField.ratingMax ||
+      !areOptionsEqual(currentField.options, newField.options)
+    ) {
+      return false
+    }
+  }
+
+  return true
+}
+
 export const useRoutineStore = create<RoutineState>((set) => ({
   routines: [],
   loading: false,
@@ -86,18 +119,29 @@ export const useRoutineStore = create<RoutineState>((set) => ({
         .between([routineId, Dexie.minKey], [routineId, Dexie.maxKey])
         .last()
       if (!current) throw new Error(`No version found for routineId ${routineId}`)
-      await db.routineVersions.update(current.id!, {
-        isLatest: false,
-      })
-      await db.routineVersions.add({
-        routineId,
-        version: current.version + 1,
-        title,
-        description,
-        fields,
-        createdAt: now,
-        isLatest: true,
-      })
+
+      const isLightChange = checkIsLightChange(current, { title, description, fields })
+
+      if (isLightChange) {
+        await db.routineVersions.update(current.id!, {
+          title,
+          description,
+          fields,
+        })
+      } else {
+        await db.routineVersions.update(current.id!, {
+          isLatest: false,
+        })
+        await db.routineVersions.add({
+          routineId,
+          version: current.version + 1,
+          title,
+          description,
+          fields,
+          createdAt: now,
+          isLatest: true,
+        })
+      }
     })
     const routines = await loadLatestVersions()
     set({ routines })
