@@ -434,7 +434,7 @@ export default function HistoryPage() {
             <Text>No activity selected</Text>
           ) : (
             <Stack gap="lg">
-              <Group justify="space-between" bg="var(--mantine-color-gray-0)" p="md" style={{ borderRadius: 'var(--mantine-radius-md)' }}>
+              <Group justify="space-between" pt="md" style={{ borderRadius: 'var(--mantine-radius-md)' }}>
                 <Stack gap={0}>
                   <Text size="xs" fw={700} c="dimmed" style={{ textTransform: 'uppercase' }}>
                     Date Recorded
