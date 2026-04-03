@@ -218,7 +218,7 @@ export default function RecordActivityPage() {
                         {field.required && <Text component="span" c="red" ml={4}>*</Text>}
                       </Text>
                       {field.description && <Text size="xs" c="dimmed">{field.description}</Text>}
-                      <Rating count={field.ratingMax ?? 5} value={typeof value === 'number' ? value : 0}
+                      <Rating count={field.ratingMax ?? 5} fractions={2} value={typeof value === 'number' ? value : 0}
                         onChange={(val) => setField(field.name, val === 0 ? null : val)} size="lg" />
                       {error && <Text size="xs" c="red">{error}</Text>}
                     </Stack>

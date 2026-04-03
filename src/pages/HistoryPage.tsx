@@ -534,7 +534,7 @@ export default function HistoryPage() {
                             {field.name}
                           </Text>
                           {field.type === 'Rating' && typeof val === 'number' && (
-                            <Rating value={val} count={field.ratingMax ?? 5} readOnly size="sm" />
+                            <Rating value={val} count={field.ratingMax ?? 5} fractions={2} readOnly size="sm" />
                           )}
                         </Group>
                         {field.description && (
