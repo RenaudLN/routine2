@@ -109,6 +109,7 @@ export default function RoutineDetailPage() {
                       <Text fw={700} size="sm">{field.name}</Text>
                       <Badge size="xs" variant="outline">{field.type}</Badge>
                       {field.required && <Badge size="xs" color="red" variant="light">required</Badge>}
+                      {field.showOnSummaryCard && <Badge size="xs" color="indigo" variant="light">summary</Badge>}
                     </Group>
                     {field.description && (
                       <Text size="xs" c="dimmed">{field.description}</Text>

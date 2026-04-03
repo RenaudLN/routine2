@@ -79,6 +79,8 @@ export default function HistoryPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [isAddingNew, setIsAddingNew] = useState(false)
 
+  const [versionsMap, setVersionsMap] = useState<Map<string, RoutineVersion>>(new Map())
+
   const handleActivityClick = async (activity: Activity) => {
     setSelectedActivity(activity)
     setLoadingDetail(true)
@@ -104,6 +106,38 @@ export default function HistoryPage() {
     void fetchRecentActivities(60)
     if (routines.length === 0) void fetchRoutines()
   }, [fetchRecentActivities, fetchRoutines, routines.length])
+
+  useEffect(() => {
+    if (routines.length > 0) {
+      setVersionsMap(prev => {
+        const next = new Map(prev)
+        routines.forEach(r => next.set(`${r.routineId}-${r.version}`, r))
+        return next
+      })
+    }
+  }, [routines])
+
+  useEffect(() => {
+    const fetchNeededVersions = async () => {
+      const uniqueRoutineIds = new Set(activities.map(a => a.routineId))
+      const newVersionsMap = new Map(versionsMap)
+      let changed = false
+      
+      for (const rid of uniqueRoutineIds) {
+        const hasVersions = Array.from(newVersionsMap.values()).some(v => v.routineId === rid)
+        if (!hasVersions) {
+           const vs = await fetchVersions(rid)
+           vs.forEach(v => newVersionsMap.set(`${v.routineId}-${v.version}`, v))
+           changed = true
+        }
+      }
+      if (changed) setVersionsMap(newVersionsMap)
+    }
+    
+    if (activities.length > 0) {
+      void fetchNeededVersions()
+    }
+  }, [activities, fetchVersions, versionsMap])
 
   // Map routineId -> title from the latest versions
   const routineTitleById = useMemo(() => {
@@ -183,6 +217,44 @@ export default function HistoryPage() {
     routines.map(r => ({ value: String(r.routineId), label: r.title })),
     [routines]
   )
+
+  const renderSummaryFields = (activity: Activity) => {
+    const version = versionsMap.get(`${activity.routineId}-${activity.routineVersion}`)
+    if (!version) return null
+    
+    const visibleFields = version.fields.filter(f => f.showOnSummaryCard)
+    if (visibleFields.length === 0) return null
+    
+    return (
+      <Group gap={4} mt={4} wrap="wrap">
+        {visibleFields.map(field => {
+          const val = activity.fieldValues.find(fv => fv.fieldName === field.name)?.value
+          if (val === undefined || val === null || val === '') return null
+          
+          let displayValue = String(val)
+          if (field.type === 'Rating') {
+            displayValue = `${val}/${field.ratingMax ?? 5}`
+          } else if ((field.type === 'Text' || field.type === 'LongText') && displayValue.length > 20) {
+            displayValue = displayValue.substring(0, 17) + '...'
+          }
+          
+          return (
+            <Badge 
+              key={field.name} 
+              variant="light" 
+              color="gray" 
+              size="xs" 
+              styles={{ label: { textTransform: 'none', fontWeight: 500 } }}
+              px={4}
+            >
+              <span style={{ fontWeight: 700, marginRight: 4 }}>{field.name}:</span>
+              {displayValue}
+            </Badge>
+          )
+        })}
+      </Group>
+    )
+  }
 
   return (
     <Container size="sm" p={0}>
@@ -305,16 +377,17 @@ export default function HistoryPage() {
                 const isToday = activity.date === today
                 return (
                   <Card key={activity.id ?? activity.createdAt.getTime()} padding="md" radius="md" onClick={() => handleActivityClick(activity)} style={{ cursor: 'pointer' }}>
-                    <Group justify="space-between" wrap="nowrap">
-                      <Stack gap={4}>
-                        <Text fw={700} size="sm">{routineTitle}</Text>
+                    <Group justify="space-between" wrap="nowrap" align="center">
+                      <Stack gap={4} style={{ flex: 1, minWidth: 0 }}>
+                        <Text fw={700} size="sm" truncate="end">{routineTitle}</Text>
                         <Group gap={4} c="dimmed">
                           <IconCalendar size={12} />
                           <Text size="xs" fw={500}>{isToday ? 'Today' : formatDateLabel(activity.date)}</Text>
                         </Group>
+                        {renderSummaryFields(activity)}
                       </Stack>
                       {/* @ts-expect-error dimmed not defined on mantine types*/}
-                      <IconChevronRight size={18} c="dimmed" />
+                      <IconChevronRight size={18} c="dimmed" style={{ flexShrink: 0 }} />
                     </Group>
                   </Card>
                 )
@@ -392,12 +465,15 @@ export default function HistoryPage() {
                         }}
                         style={{ cursor: 'pointer' }}
                       >
-                        <Group justify="space-between">
-                          <Text size="sm" fw={600}>
-                            {routineTitleById.get(a.routineId) ?? `Routine ${a.routineId}`}
-                          </Text>
+                        <Group justify="space-between" align="center">
+                          <Stack gap={4} style={{ flex: 1, minWidth: 0 }}>
+                            <Text size="sm" fw={600} truncate="end">
+                              {routineTitleById.get(a.routineId) ?? `Routine ${a.routineId}`}
+                            </Text>
+                            {renderSummaryFields(a)}
+                          </Stack>
                           {/* @ts-expect-error dimmed not defined on mantine types */}
-                          <IconChevronRight size={16} c="dimmed" />
+                          <IconChevronRight size={16} c="dimmed" style={{ flexShrink: 0 }} />
                         </Group>
                       </Card>
                     ))}

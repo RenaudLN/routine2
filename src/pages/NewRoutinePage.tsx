@@ -338,14 +338,22 @@ export default function NewRoutinePage() {
                       }
                       style={{ flex: 1 }}
                     />
-                    <Checkbox
-                      label="Required"
-                      checked={field.required}
-                      onChange={(e) =>
-                        updateField(field._key, { required: e.currentTarget.checked })
-                      }
-                      mb={10}
-                    />
+                    <Group gap="md" mb={10}>
+                      <Checkbox
+                        label="Required"
+                        checked={field.required}
+                        onChange={(e) =>
+                          updateField(field._key, { required: e.currentTarget.checked })
+                        }
+                      />
+                      <Checkbox
+                        label="Summary Card"
+                        checked={field.showOnSummaryCard}
+                        onChange={(e) =>
+                          updateField(field._key, { showOnSummaryCard: e.currentTarget.checked })
+                        }
+                      />
+                    </Group>
                   </Group>
 
                   {field.type === 'Rating' && (

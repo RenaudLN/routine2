@@ -14,6 +14,8 @@ export interface RoutineField {
   type: FieldType
   description?: string
   required: boolean
+  /** Whether to show this field on the summary card. Defaults to false. */
+  showOnSummaryCard?: boolean
   /** Rating only - maximum value on the scale. Defaults to 5. */
   ratingMax?: number
   /** Option only - exhaustive list of selectable values. */
