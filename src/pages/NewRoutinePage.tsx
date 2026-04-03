@@ -54,6 +54,7 @@ function createDraftField(): DraftField {
     type: 'Text',
     description: '',
     required: false,
+    showOnSummaryCard: false,
   }
 }
 
@@ -147,6 +148,7 @@ export default function NewRoutinePage() {
           name: f.name.trim(),
           type: f.type,
           required: f.required,
+          showOnSummaryCard: f.showOnSummaryCard ?? false,
         }
         if (f.description?.trim()) field.description = f.description.trim()
         if (f.type === 'Rating') field.ratingMax = f.ratingMax ?? 5
