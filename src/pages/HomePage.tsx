@@ -129,7 +129,7 @@ export default function HomePage() {
                     size={40} 
                     radius="md" 
                     variant="light" 
-                    color="indigo"
+                    color={routine.color || 'indigo'}
                   >
                     <IconActivity size={22} />
                   </ThemeIcon>

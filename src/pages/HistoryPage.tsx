@@ -38,7 +38,7 @@ import { useRoutineStore } from '../store/routineStore'
 import { todayISO } from '../store/activityStore'
 import type { Activity, RoutineVersion } from '../types'
 
-/** Mantine theme color palette to cycle through for each routine. */
+/** Mantine theme color palette to cycle through for each routine if no color is set. */
 const ROUTINE_COLORS = [
   'indigo.6',
   'cyan.6',
@@ -157,10 +157,11 @@ export default function HistoryPage() {
   const colorByRoutineId = useMemo(() => {
     const map = new Map<number, string>()
     activeRoutineIds.forEach((id, i) => {
-      map.set(id, ROUTINE_COLORS[i % ROUTINE_COLORS.length])
+      const routine = routines.find(r => r.routineId === id)
+      map.set(id, routine?.color || ROUTINE_COLORS[i % ROUTINE_COLORS.length])
     })
     return map
-  }, [activeRoutineIds])
+  }, [activeRoutineIds, routines])
 
   // Select options for the filter
   const filterOptions = useMemo(
@@ -494,8 +495,8 @@ export default function HistoryPage() {
                   <IconActivity size={18} />
                </ThemeIcon>
                <Title order={4}>
-                {selectedVersion?.title ??
-                  routineTitleById.get(selectedActivity?.routineId ?? 0) ??
+                {selectedVersion?.title ||
+                  routineTitleById.get(selectedActivity?.routineId ?? 0) ||
                   'Activity Detail'}
               </Title>
             </Group>

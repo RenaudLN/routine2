@@ -19,6 +19,7 @@ interface RoutineState {
     fields: RoutineField[]
     frequency?: RoutineVersion['frequency']
     reminders?: RoutineVersion['reminders']
+    color?: string
   }) => Promise<number>
   updateRoutine: (
     routineId: number,
@@ -28,6 +29,7 @@ interface RoutineState {
       fields: RoutineField[]
       frequency?: RoutineVersion['frequency']
       reminders?: RoutineVersion['reminders']
+      color?: string
     },
   ) => Promise<void>
   deleteRoutine: (routineId: number) => Promise<void>
@@ -64,6 +66,7 @@ function checkIsLightChange(
     fields: RoutineField[]
     frequency?: RoutineVersion['frequency']
     reminders?: RoutineVersion['reminders']
+    color?: string
   },
 ): boolean {
   // If fields changed, it's NOT a light change
@@ -86,12 +89,13 @@ function checkIsLightChange(
     }
   }
 
-  // For this implementation, we consider frequency/reminders change as "light" 
-  // (doesn't require a new version ID for data integrity of activities)
-  // but if we want to track history of goals, we could return false here.
-  // Let's keep it simple and treat it as light change for now, similar to title/description.
-  
+  // Treat title, description, color, frequency, and reminders as light changes.
   return true
+}
+
+export function getRandomColor() {
+  const hue = Math.floor(Math.random() * 360)
+  return `hsl(${hue}, 70%, 50%)`
 }
 
 export const useRoutineStore = create<RoutineState>((set) => ({
@@ -102,8 +106,6 @@ export const useRoutineStore = create<RoutineState>((set) => ({
   fetchRoutines: async () => {
     set({ loading: true, error: null })
     try {
-      // Small delay to ensure the Loader is visible in tests that expect it, 
-      // and to let Dexie initialize if needed.
       await new Promise((resolve) => setTimeout(resolve, 50))
       const routines = await loadLatestVersions()
       set({ routines, loading: false })
@@ -112,7 +114,7 @@ export const useRoutineStore = create<RoutineState>((set) => ({
     }
   },
 
-  addRoutine: async ({ title, description, fields, frequency, reminders }) => {
+  addRoutine: async ({ title, description, fields, frequency, reminders, color }) => {
     const now = new Date()
     const routineId = (await db.routines.add({ createdAt: now })) as number
     await db.routineVersions.add({
@@ -123,6 +125,7 @@ export const useRoutineStore = create<RoutineState>((set) => ({
       fields,
       frequency,
       reminders,
+      color: color || getRandomColor(),
       createdAt: now,
       isLatest: true,
     })
@@ -131,7 +134,7 @@ export const useRoutineStore = create<RoutineState>((set) => ({
     return routineId
   },
 
-  updateRoutine: async (routineId, { title, description, fields, frequency, reminders }) => {
+  updateRoutine: async (routineId, { title, description, fields, frequency, reminders, color }) => {
     if (!routineId) throw new Error('Routine ID is required for updating')
     const now = new Date()
     await db.transaction('rw', db.routineVersions, async () => {
@@ -147,6 +150,7 @@ export const useRoutineStore = create<RoutineState>((set) => ({
         fields,
         frequency,
         reminders,
+        color,
       })
 
       if (isLightChange) {
@@ -156,6 +160,7 @@ export const useRoutineStore = create<RoutineState>((set) => ({
           fields,
           frequency,
           reminders,
+          color,
         })
       } else {
         await db.routineVersions.update(current.id!, {
@@ -169,6 +174,7 @@ export const useRoutineStore = create<RoutineState>((set) => ({
           fields,
           frequency,
           reminders,
+          color: color || current.color,
           createdAt: now,
           isLatest: true,
         })

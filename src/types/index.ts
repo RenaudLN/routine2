@@ -73,6 +73,7 @@ export interface RoutineVersion {
   isLatest: boolean
   frequency?: FrequencyGoal
   reminders?: Reminder[]
+  color?: string
   /** Set when the user soft-deletes the Routine. */
   deletedAt?: Date
 }
