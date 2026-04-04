@@ -279,7 +279,7 @@ export default function NewRoutinePage() {
                <ThemeIcon variant="light" color="indigo" radius="md">
                   <IconSettings size={18} />
                </ThemeIcon>
-               <Text fw={700}>Basic Info</Text>
+               <Text f>Basic Info</Text>
             </Group>
 
             <TextInput
@@ -313,7 +313,7 @@ export default function NewRoutinePage() {
                 <ThemeIcon variant="light" color="indigo" radius="md">
                     <IconListDetails size={18} />
                 </ThemeIcon>
-                <Text fw={700}>Fields Configuration</Text>
+                <Text f>Fields Configuration</Text>
               </Group>
            </Group>
 
@@ -421,7 +421,7 @@ export default function NewRoutinePage() {
                           ratingMax: typeof val === 'number' ? val : 5,
                         })
                       }
-                      w={160}
+                      
                     />
                   )}
 
@@ -460,7 +460,7 @@ export default function NewRoutinePage() {
               <ThemeIcon variant="light" color="blue" radius="md">
                 <IconInfoCircle size={18} />
               </ThemeIcon>
-              <Text fw={700}>Additional Info</Text>
+              <Text f>Additional Info</Text>
             </Group>
 
             <Stack gap={4}>
@@ -471,7 +471,7 @@ export default function NewRoutinePage() {
                     value={color} 
                     onChange={setColor} 
                     swatches={swatches}
-                    swatchesPerRow={10}
+                    swatchesPerRo
                     style={{ flex: 1 }}
                     radius="md"
                   />
@@ -520,7 +520,7 @@ export default function NewRoutinePage() {
                 <ThemeIcon variant="light" color="orange" radius="md">
                   <IconBell size={18} />
                 </ThemeIcon>
-                <Text fw={700}>Reminders</Text>
+                <Text f>Reminders</Text>
               </Group>
 
               {reminders.map((reminder) => (

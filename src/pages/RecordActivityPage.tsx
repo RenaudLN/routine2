@@ -170,7 +170,6 @@ export default function RecordActivityPage() {
               onChange={(e) => setDate(e.currentTarget.value)}
               required
               radius="md"
-              maw={300}
             />
 
             <Divider />
@@ -208,7 +207,7 @@ export default function RecordActivityPage() {
                       required={field.required} error={error}
                       value={typeof value === 'number' ? value : ''}
                       onChange={(val) => setField(field.name, val === '' ? null : Number(val))}
-                      radius="md" maw={300} />
+                      radius="md"  />
                   )}
 
                   {field.type === 'Rating' && (
@@ -219,7 +218,7 @@ export default function RecordActivityPage() {
                       </Text>
                       {field.description && <Text size="xs" c="dimmed">{field.description}</Text>}
                       <Rating count={field.ratingMax ?? 5} fractions={2} value={typeof value === 'number' ? value : 0}
-                        onChange={(val) => setField(field.name, val === 0 ? null : val)} size="lg" />
+                        onChange={(val) => setField(field.name, val === 0 ? null : val)} size="xl" />
                       {error && <Text size="xs" c="red">{error}</Text>}
                     </Stack>
                   )}
@@ -229,7 +228,7 @@ export default function RecordActivityPage() {
                       required={field.required} error={error} type="date"
                       value={typeof value === 'string' ? value : ''}
                       onChange={(e) => setField(field.name, e.currentTarget.value || null)}
-                      radius="md" maw={300} />
+                      radius="md"  />
                   )}
 
                   {field.type === 'Option' && (
@@ -238,7 +237,7 @@ export default function RecordActivityPage() {
                       data={field.options ?? []}
                       value={typeof value === 'string' ? value : null}
                       onChange={(val) => setField(field.name, val)}
-                      clearable radius="md" maw={400} />
+                      clearable radius="md"  />
                   )}
                 </Box>
               )
