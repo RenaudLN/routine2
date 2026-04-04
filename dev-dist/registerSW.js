@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) navigator.serviceWorker.register('/routine2/dev-sw.js?dev-sw', { scope: '/routine2/', type: 'module' })

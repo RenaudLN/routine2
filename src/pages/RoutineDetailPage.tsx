@@ -1,8 +1,18 @@
 import { useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Badge, Button, Group, Loader, Stack, Text, Title, Container, Card, ThemeIcon, Divider } from '@mantine/core'
-import { IconArrowLeft, IconTrash, IconSettings, IconListDetails, IconEdit } from '@tabler/icons-react'
+import { IconArrowLeft, IconTrash, IconSettings, IconListDetails, IconEdit, IconCalendarEvent, IconBell } from '@tabler/icons-react'
 import { useRoutineStore } from '../store/routineStore'
+
+const DAYS_OF_WEEK: Record<number, string> = {
+  1: 'Monday',
+  2: 'Tuesday',
+  3: 'Wednesday',
+  4: 'Thursday',
+  5: 'Friday',
+  6: 'Saturday',
+  0: 'Sunday',
+}
 
 export default function RoutineDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -29,6 +39,23 @@ export default function RoutineDetailPage() {
     if (window.confirm(`Are you sure you want to delete "${routine.title}"?`)) {
       await deleteRoutine(routine.routineId)
       navigate('/')
+    }
+  }
+
+  const renderFrequency = () => {
+    if (!routine.frequency) return 'Not set'
+    const { type, value, days } = routine.frequency
+    switch (type) {
+      case 'daily':
+        return 'Daily'
+      case 'weekly':
+        return `${value} times per week`
+      case 'monthly':
+        return `${value} times per month`
+      case 'specific_days':
+        return (days || []).map((d) => DAYS_OF_WEEK[d]).join(', ')
+      default:
+        return 'Not set'
     }
   }
 
@@ -74,6 +101,38 @@ export default function RoutineDetailPage() {
              </Group>
           </Group>
         </Stack>
+
+        <Group grow align="stretch">
+          <Card radius="lg" padding="lg" withBorder>
+            <Stack gap="xs">
+              <Group gap="xs">
+                <ThemeIcon variant="light" color="teal" size="sm">
+                  <IconCalendarEvent size={16} />
+                </ThemeIcon>
+                <Text fw={700} size="sm">Goal</Text>
+              </Group>
+              <Text size="sm">{renderFrequency()}</Text>
+            </Stack>
+          </Card>
+
+          <Card radius="lg" padding="lg" withBorder>
+            <Stack gap="xs">
+              <Group gap="xs">
+                <ThemeIcon variant="light" color="orange" size="sm">
+                  <IconBell size={16} />
+                </ThemeIcon>
+                <Text fw={700} size="sm">Reminders</Text>
+              </Group>
+              {routine.reminders && routine.reminders.length > 0 ? (
+                <Text size="sm">
+                  {routine.reminders.map((r) => r.time).join(', ')}
+                </Text>
+              ) : (
+                <Text size="sm" c="dimmed">No reminders</Text>
+              )}
+            </Stack>
+          </Card>
+        </Group>
 
         {routine.description && (
           <Card radius="lg" padding="lg">

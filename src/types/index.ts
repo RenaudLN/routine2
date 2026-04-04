@@ -44,6 +44,19 @@ export interface Routine {
  * One immutable snapshot of a Routine definition.
  * A new row is created every time the user edits a Routine.
  */
+export type FrequencyType = "daily" | "weekly" | "monthly" | "specific_days"
+
+export interface FrequencyGoal {
+  type: FrequencyType
+  value?: number // for weekly/monthly
+  days?: number[] // 0-6 for specific_days (Sunday-Saturday)
+}
+
+export interface Reminder {
+  id: string
+  time: string // HH:mm
+}
+
 export interface RoutineVersion {
   /** Auto-incremented by Dexie; undefined before first save. */
   id?: number
@@ -58,6 +71,8 @@ export interface RoutineVersion {
   createdAt: Date
   /** True only for the most recent version of this routineId. */
   isLatest: boolean
+  frequency?: FrequencyGoal
+  reminders?: Reminder[]
   /** Set when the user soft-deletes the Routine. */
   deletedAt?: Date
 }

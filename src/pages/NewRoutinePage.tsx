@@ -29,9 +29,11 @@ import {
   IconSettings,
   IconListDetails,
   IconCheck,
+  IconCalendarEvent,
+  IconBell,
 } from '@tabler/icons-react'
 import { useRoutineStore } from '../store/routineStore'
-import type { FieldType, RoutineField } from '../types'
+import type { FieldType, RoutineField, FrequencyGoal, FrequencyType, Reminder } from '../types'
 
 const FIELD_TYPES: { value: FieldType; label: string }[] = [
   { value: 'Text', label: 'Text' },
@@ -40,6 +42,23 @@ const FIELD_TYPES: { value: FieldType; label: string }[] = [
   { value: 'Number', label: 'Number' },
   { value: 'Rating', label: 'Rating' },
   { value: 'Option', label: 'Option' },
+]
+
+const FREQUENCY_TYPES: { value: FrequencyType; label: string }[] = [
+  { value: 'daily', label: 'Daily' },
+  { value: 'weekly', label: 'Weekly (times per week)' },
+  { value: 'monthly', label: 'Monthly (times per month)' },
+  { value: 'specific_days', label: 'Specific days of week' },
+]
+
+const DAYS_OF_WEEK = [
+  { value: '1', label: 'Mon' },
+  { value: '2', label: 'Tue' },
+  { value: '3', label: 'Wed' },
+  { value: '4', label: 'Thu' },
+  { value: '5', label: 'Fri' },
+  { value: '6', label: 'Sat' },
+  { value: '0', label: 'Sun' },
 ]
 
 interface DraftField extends RoutineField {
@@ -67,6 +86,9 @@ export default function NewRoutinePage() {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [fields, setFields] = useState<DraftField[]>([createDraftField()])
+  const [frequency, setFrequency] = useState<FrequencyGoal>({ type: 'daily' })
+  const [reminders, setReminders] = useState<Reminder[]>([])
+  
   const [loading, setLoading] = useState(isEdit)
   const [saving, setSaving] = useState(false)
   const [titleError, setTitleError] = useState<string | null>(null)
@@ -85,6 +107,12 @@ export default function NewRoutinePage() {
                 _key: crypto.randomUUID(),
               }))
             )
+            if (latest.frequency) {
+              setFrequency(latest.frequency)
+            }
+            if (latest.reminders) {
+              setReminders(latest.reminders)
+            }
           }
         } catch (err) {
           notifications.show({
@@ -125,6 +153,18 @@ export default function NewRoutinePage() {
     })
   }
 
+  function addReminder() {
+    setReminders((prev) => [...prev, { id: crypto.randomUUID(), time: '09:00' }])
+  }
+
+  function updateReminder(id: string, time: string) {
+    setReminders((prev) => prev.map((r) => (r.id === id ? { ...r, time } : r)))
+  }
+
+  function removeReminder(id: string) {
+    setReminders((prev) => prev.filter((r) => r.id !== id))
+  }
+
   function validate(): boolean {
     let valid = true
 
@@ -158,12 +198,16 @@ export default function NewRoutinePage() {
 
     setSaving(true)
     try {
+      const routineData = {
+        title: title.trim(),
+        description: description.trim() || undefined,
+        fields: cleanFields,
+        frequency,
+        reminders,
+      }
+
       if (isEdit && id) {
-        await updateRoutine(Number(id), {
-          title: title.trim(),
-          description: description.trim() || undefined,
-          fields: cleanFields,
-        })
+        await updateRoutine(Number(id), routineData)
         notifications.show({
           title: 'Routine updated',
           message: `"${title.trim()}" has been updated to a new version.`,
@@ -171,11 +215,7 @@ export default function NewRoutinePage() {
         })
         navigate(`/routines/${id}`)
       } else {
-        const routineId = await addRoutine({
-          title: title.trim(),
-          description: description.trim() || undefined,
-          fields: cleanFields,
-        })
+        const routineId = await addRoutine(routineData)
         notifications.show({
           title: 'Routine created',
           message: `"${title.trim()}" has been saved.`,
@@ -222,39 +262,123 @@ export default function NewRoutinePage() {
           </Text>
         </Stack>
 
+        {/* Basic Info, Frequency & Reminders combined */}
         <Card radius="lg" padding="lg">
-          <Stack gap="lg">
-             <Group gap="xs" mb="xs">
-               <ThemeIcon variant="light" color="indigo" radius="md">
-                  <IconSettings size={18} />
-               </ThemeIcon>
-               <Text fw={700}>Basic Info</Text>
-            </Group>
+          <Stack gap="xl">
+            {/* Basic Info */}
+            <Stack gap="lg">
+               <Group gap="xs" mb="xs">
+                 <ThemeIcon variant="light" color="indigo" radius="md">
+                    <IconSettings size={18} />
+                 </ThemeIcon>
+                 <Text fw={700}>Basic Info</Text>
+              </Group>
 
-            <TextInput
-              label="Routine Name"
-              placeholder="e.g. Morning check-in"
-              required
-              radius="md"
-              value={title}
-              onChange={(e) => {
-                setTitle(e.currentTarget.value)
-                if (e.currentTarget.value.trim()) setTitleError(null)
-              }}
-              error={titleError}
-            />
-            <Textarea
-              label="Description"
-              placeholder="Optional — describe what this routine is for"
-              autosize
-              minRows={2}
-              radius="md"
-              value={description}
-              onChange={(e) => setDescription(e.currentTarget.value)}
-            />
+              <TextInput
+                label="Routine Name"
+                placeholder="e.g. Morning check-in"
+                required
+                radius="md"
+                value={title}
+                onChange={(e) => {
+                  setTitle(e.currentTarget.value)
+                  if (e.currentTarget.value.trim()) setTitleError(null)
+                }}
+                error={titleError}
+              />
+              <Textarea
+                label="Description"
+                placeholder="Optional — describe what this routine is for"
+                autosize
+                minRows={2}
+                radius="md"
+                value={description}
+                onChange={(e) => setDescription(e.currentTarget.value)}
+              />
+              <Select
+                label="Frequency Goal"
+                data={FREQUENCY_TYPES}
+                value={frequency.type}
+                onChange={(val) => setFrequency({ ...frequency, type: (val as FrequencyType) || 'daily' })}
+                radius="md"
+              />
+              {(frequency.type === 'weekly' || frequency.type === 'monthly') && (
+                <NumberInput
+                  label={frequency.type === 'weekly' ? 'Times per week' : 'Times per month'}
+                  min={1}
+                  max={frequency.type === 'weekly' ? 7 : 31}
+                  value={frequency.value ?? 1}
+                  onChange={(val) => setFrequency({ ...frequency, value: typeof val === 'number' ? val : 1 })}
+                  radius="md"
+                />
+              )}
+              {frequency.type === 'specific_days' && (
+                <Checkbox.Group
+                  label="On which days?"
+                  value={(frequency.days || []).map(String)}
+                  onChange={(val) => setFrequency({ ...frequency, days: val.map(Number) })}
+                >
+                  <Group mt="xs" gap="sm">
+                    {DAYS_OF_WEEK.map((day) => (
+                      <Checkbox key={day.value} value={day.value} label={day.label} />
+                    ))}
+                  </Group>
+                </Checkbox.Group>
+              )}
+
+            </Stack>
+
+            <Divider />
+
+            {/* Reminders */}
+            <Stack gap="lg">
+              <Group gap="xs" mb="xs">
+                <ThemeIcon variant="light" color="orange" radius="md">
+                  <IconBell size={18} />
+                </ThemeIcon>
+                <Text fw={700}>Reminders</Text>
+              </Group>
+
+              {reminders.map((reminder) => (
+                <Group key={reminder.id} align="flex-end">
+                  <TextInput
+                    label="Reminder time"
+                    type="time"
+                    value={reminder.time}
+                    onChange={(e) => updateReminder(reminder.id, e.currentTarget.value)}
+                    radius="md"
+                    style={{ flex: 1 }}
+                  />
+                  <ActionIcon
+                    color="red"
+                    variant="light"
+                    size="lg"
+                    radius="md"
+                    onClick={() => removeReminder(reminder.id)}
+                  >
+                    <IconTrash size={18} />
+                  </ActionIcon>
+                </Group>
+              ))}
+
+              <Button
+                variant="light"
+                color="orange"
+                leftSection={<IconPlus size={18} />}
+                onClick={addReminder}
+                fullWidth
+                radius="md"
+              >
+                Add Reminder
+              </Button>
+              <Text size="xs" c="dimmed">
+                Reminders will trigger system notifications if enabled on the home page.
+              </Text>
+            </Stack>
           </Stack>
         </Card>
 
+        {/* Fields Configuration */}
         <Stack gap="md">
            <Group justify="space-between" align="center">
               <Group gap="xs">

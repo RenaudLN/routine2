@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import {
   ActionIcon,
   Button,
@@ -12,6 +12,7 @@ import {
   Badge,
   ThemeIcon,
   Container,
+  Alert,
 } from '@mantine/core'
 import {
   IconDotsVertical,
@@ -20,17 +21,36 @@ import {
   IconTrash,
   IconActivity,
   IconChevronRight,
+  IconBell,
 } from '@tabler/icons-react'
 import { useNavigate } from 'react-router-dom'
 import { useRoutineStore } from '../store/routineStore'
+import { checkNotificationPermission, requestNotificationPermission, registerPeriodicSync } from '../utils/notifications'
+import { useNotificationScheduler } from '../hooks/useNotificationScheduler'
 
 export default function HomePage() {
   const { routines, loading, fetchRoutines, deleteRoutine } = useRoutineStore()
   const navigate = useNavigate()
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default')
+
+  // Initialize foreground notification scheduler
+  useNotificationScheduler()
 
   useEffect(() => {
     void fetchRoutines()
+    void checkNotificationPermission().then(setNotificationPermission)
   }, [fetchRoutines])
+
+  const handleEnableNotifications = async () => {
+    const granted = await requestNotificationPermission()
+    if (granted) {
+      setNotificationPermission('granted')
+      // Register for periodic background sync
+      await registerPeriodicSync()
+    } else {
+      setNotificationPermission('denied')
+    }
+  }
 
   return (
     <Container size="sm" p={0}>
@@ -40,7 +60,34 @@ export default function HomePage() {
             <Title order={2} style={{ fontWeight: 800 }}>My Routines</Title>
             <Text c="dimmed" size="sm">Manage and track your daily habits</Text>
           </Stack>
+          <Button 
+            variant="light" 
+            size="sm" 
+            radius="md" 
+            onClick={() => navigate('/routines/new')}
+            leftSection={<IconPlus size={16} />}
+          >
+            New Routine
+          </Button>
         </Group>
+
+        {notificationPermission === 'default' && (
+          <Alert
+            icon={<IconBell size={16} />}
+            title="Enable Notifications"
+            color="indigo"
+            radius="md"
+            withCloseButton={false}
+            variant="light"
+          >
+            <Text size="sm" mb="xs">
+              Get reminders for your routines. Stay consistent with your goals.
+            </Text>
+            <Button size="xs" variant="filled" color="indigo" onClick={handleEnableNotifications}>
+              Enable
+            </Button>
+          </Alert>
+        )}
 
         {loading && (
           <Group justify="center" py="xl">

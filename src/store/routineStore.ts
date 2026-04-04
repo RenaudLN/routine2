@@ -17,12 +17,19 @@ interface RoutineState {
     title: string
     description?: string
     fields: RoutineField[]
+    frequency?: RoutineVersion['frequency']
+    reminders?: RoutineVersion['reminders']
   }) => Promise<number>
-  updateRoutine: (routineId: number, data: {
-    title: string
-    description?: string
-    fields: RoutineField[]
-  }) => Promise<void>
+  updateRoutine: (
+    routineId: number,
+    data: {
+      title: string
+      description?: string
+      fields: RoutineField[]
+      frequency?: RoutineVersion['frequency']
+      reminders?: RoutineVersion['reminders']
+    },
+  ) => Promise<void>
   deleteRoutine: (routineId: number) => Promise<void>
   /** Returns all versions for a given routineId, ordered by version asc. */
   fetchVersions: (routineId: number) => Promise<RoutineVersion[]>
@@ -51,8 +58,15 @@ function areOptionsEqual(a?: string[], b?: string[]): boolean {
 
 function checkIsLightChange(
   current: RoutineVersion,
-  newData: { title: string; description?: string; fields: RoutineField[] },
+  newData: {
+    title: string
+    description?: string
+    fields: RoutineField[]
+    frequency?: RoutineVersion['frequency']
+    reminders?: RoutineVersion['reminders']
+  },
 ): boolean {
+  // If fields changed, it's NOT a light change
   if (current.fields.length !== newData.fields.length) return false
 
   const currentFieldsMap = new Map(current.fields.map((f) => [f.name, f]))
@@ -72,6 +86,11 @@ function checkIsLightChange(
     }
   }
 
+  // For this implementation, we consider frequency/reminders change as "light" 
+  // (doesn't require a new version ID for data integrity of activities)
+  // but if we want to track history of goals, we could return false here.
+  // Let's keep it simple and treat it as light change for now, similar to title/description.
+  
   return true
 }
 
@@ -93,7 +112,7 @@ export const useRoutineStore = create<RoutineState>((set) => ({
     }
   },
 
-  addRoutine: async ({ title, description, fields }) => {
+  addRoutine: async ({ title, description, fields, frequency, reminders }) => {
     const now = new Date()
     const routineId = (await db.routines.add({ createdAt: now })) as number
     await db.routineVersions.add({
@@ -102,6 +121,8 @@ export const useRoutineStore = create<RoutineState>((set) => ({
       title,
       description,
       fields,
+      frequency,
+      reminders,
       createdAt: now,
       isLatest: true,
     })
@@ -110,7 +131,7 @@ export const useRoutineStore = create<RoutineState>((set) => ({
     return routineId
   },
 
-  updateRoutine: async (routineId, { title, description, fields }) => {
+  updateRoutine: async (routineId, { title, description, fields, frequency, reminders }) => {
     if (!routineId) throw new Error('Routine ID is required for updating')
     const now = new Date()
     await db.transaction('rw', db.routineVersions, async () => {
@@ -120,13 +141,21 @@ export const useRoutineStore = create<RoutineState>((set) => ({
         .last()
       if (!current) throw new Error(`No version found for routineId ${routineId}`)
 
-      const isLightChange = checkIsLightChange(current, { title, description, fields })
+      const isLightChange = checkIsLightChange(current, {
+        title,
+        description,
+        fields,
+        frequency,
+        reminders,
+      })
 
       if (isLightChange) {
         await db.routineVersions.update(current.id!, {
           title,
           description,
           fields,
+          frequency,
+          reminders,
         })
       } else {
         await db.routineVersions.update(current.id!, {
@@ -138,6 +167,8 @@ export const useRoutineStore = create<RoutineState>((set) => ({
           title,
           description,
           fields,
+          frequency,
+          reminders,
           createdAt: now,
           isLatest: true,
         })
@@ -171,7 +202,7 @@ export const useRoutineStore = create<RoutineState>((set) => ({
   fetchSpecificVersion: async (routineId, versionNum) => {
     if (!routineId || !versionNum) return null
     const version = await db.routineVersions
-      .where("[routineId+version]")
+      .where('[routineId+version]')
       .equals([routineId, versionNum])
       .first()
     return version ?? null
