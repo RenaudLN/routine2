@@ -5,22 +5,17 @@ import {
   Card,
   Group,
   Loader,
-  Menu,
   Stack,
   Text,
   Title,
-  Badge,
   ThemeIcon,
   Container,
   Alert,
 } from '@mantine/core'
 import {
-  IconDotsVertical,
-  IconEdit,
+  IconSettings,
   IconPlus,
-  IconTrash,
   IconActivity,
-  IconChevronRight,
   IconBell,
 } from '@tabler/icons-react'
 import { useNavigate } from 'react-router-dom'
@@ -29,7 +24,7 @@ import { checkNotificationPermission, requestNotificationPermission, registerPer
 import { useNotificationScheduler } from '../hooks/useNotificationScheduler'
 
 export default function HomePage() {
-  const { routines, loading, fetchRoutines, deleteRoutine } = useRoutineStore()
+  const { routines, loading, fetchRoutines } = useRoutineStore()
   const navigate = useNavigate()
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default')
 
@@ -128,8 +123,8 @@ export default function HomePage() {
               onClick={() => navigate(`/routines/${routine.routineId}/record`)}
               style={{ cursor: 'pointer' }}
             >
-              <Group justify="space-between" align="flex-start" wrap="nowrap">
-                <Group gap="md" align="flex-start" wrap="nowrap" style={{ flex: 1 }}>
+              <Group justify="space-between" align="center" wrap="nowrap">
+                <Group gap="md" align="center" wrap="nowrap" style={{ flex: 1 }}>
                   <ThemeIcon 
                     size={40} 
                     radius="md" 
@@ -148,57 +143,17 @@ export default function HomePage() {
                   </Stack>
                 </Group>
 
-                <Menu position="bottom-end" shadow="md" withinPortal>
-                  <Menu.Target>
-                    <ActionIcon
-                      variant="subtle"
-                      color="gray"
-                      onClick={(e) => e.stopPropagation()}
-                      size="lg"
-                    >
-                      <IconDotsVertical size={20} />
-                    </ActionIcon>
-                  </Menu.Target>
-
-                  <Menu.Dropdown onClick={(e) => e.stopPropagation()}>
-                    <Menu.Item
-                      leftSection={<IconEdit size={16} />}
-                      onClick={() => navigate(`/routines/${routine.routineId}/edit`)}
-                    >
-                      Edit Routine
-                    </Menu.Item>
-                    <Menu.Item
-                      color="red"
-                      leftSection={<IconTrash size={16} />}
-                      onClick={() => {
-                        if (
-                          window.confirm(
-                            `Are you sure you want to delete "${routine.title}"?`
-                          )
-                        ) {
-                          void deleteRoutine(routine.routineId)
-                        }
-                      }}
-                    >
-                      Delete Routine
-                    </Menu.Item>
-                  </Menu.Dropdown>
-                </Menu>
-              </Group>
-
-              <Group justify="space-between" mt="lg" align="center">
-                <Group gap="xs">
-                   <Badge variant="dot" color="indigo" size="sm">
-                    v{routine.version}
-                  </Badge>
-                  <Text size="xs" c="dimmed">
-                    {routine.fields.length} {routine.fields.length === 1 ? 'field' : 'fields'}
-                  </Text>
-                </Group>
-                <Group gap={4} c="indigo">
-                  <Text size="xs" fw={700}>RECORD</Text>
-                  <IconChevronRight size={14} stroke={3} />
-                </Group>
+                <ActionIcon
+                  variant="subtle"
+                  color="gray"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    navigate(`/routines/${routine.routineId}`)
+                  }}
+                  size="lg"
+                >
+                  <IconSettings size={20} />
+                </ActionIcon>
               </Group>
             </Card>
           ))}
