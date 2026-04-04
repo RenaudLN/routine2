@@ -11,7 +11,9 @@ interface BeforeInstallPromptEvent extends Event {
 
 export function usePWA() {
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null)
-  const [isInstalled, setIsInstalled] = useState(false)
+  const [isInstalled, setIsInstalled] = useState(() => 
+    typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches
+  )
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -24,16 +26,10 @@ export function usePWA() {
     const handleAppInstalled = () => {
       setInstallPrompt(null)
       setIsInstalled(true)
-      
     }
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
     window.addEventListener('appinstalled', handleAppInstalled)
-
-    // Check if already installed
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setIsInstalled(true)
-    }
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
@@ -48,8 +44,7 @@ export function usePWA() {
     await installPrompt.prompt()
 
     // Wait for the user to respond to the prompt
-    const { outcome } = await installPrompt.userChoice
-    
+    await installPrompt.userChoice
 
     // We've used the prompt, and can't use it again, throw it away
     setInstallPrompt(null)

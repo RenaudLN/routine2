@@ -6,6 +6,10 @@ interface ManifestEntry {
   revision: string | null
 }
 
+interface PeriodicSyncEvent extends ExtendableEvent {
+  tag: string
+}
+
 declare const self: ServiceWorkerGlobalScope & {
   __WB_MANIFEST: (string | ManifestEntry)[]
 }
@@ -93,7 +97,8 @@ async function checkAndShowReminders() {
   }
 }
 
-self.addEventListener('periodicsync' as any, (event: any) => {
+// @ts-expect-error periodicsync is not standard yet
+self.addEventListener('periodicsync', (event: PeriodicSyncEvent) => {
   if (event.tag === 'reminder-sync') {
     event.waitUntil(checkAndShowReminders())
   }
