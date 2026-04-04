@@ -29,7 +29,6 @@ import {
   IconSettings,
   IconListDetails,
   IconCheck,
-  IconCalendarEvent,
   IconBell,
 } from '@tabler/icons-react'
 import { useRoutineStore } from '../store/routineStore'
