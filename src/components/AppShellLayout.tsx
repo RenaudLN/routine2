@@ -10,8 +10,9 @@ import {
   useMantineColorScheme,
   Box,
 } from '@mantine/core'
-import { IconHome, IconPlus, IconHistory, IconSun, IconMoon } from '@tabler/icons-react'
+import { IconHome, IconPlus, IconHistory, IconSun, IconMoon, IconDownload } from '@tabler/icons-react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
+import { usePWA } from '../hooks/usePWA'
 
 interface BottomNavItem {
   label: string
@@ -85,6 +86,7 @@ function ThemeToggle() {
 export default function AppShellLayout() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { isInstallable, install } = usePWA()
 
   return (
     <AppShell
@@ -109,7 +111,21 @@ export default function AppShellLayout() {
               ROUTINE<span style={{ color: 'var(--mantine-primary-color-filled)' }}>2</span>
             </Title>
           </Group>
-          <ThemeToggle />
+          <Group gap="xs">
+            {isInstallable && (
+              <ActionIcon
+                variant="light"
+                color="indigo"
+                onClick={install}
+                title="Install App"
+                size="lg"
+                radius="md"
+              >
+                <IconDownload size={20} stroke={1.5} />
+              </ActionIcon>
+            )}
+            <ThemeToggle />
+          </Group>
         </Group>
       </AppShell.Header>
 
