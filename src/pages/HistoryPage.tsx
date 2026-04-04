@@ -163,6 +163,16 @@ export default function HistoryPage() {
     return map
   }, [activeRoutineIds, routines])
 
+  const getRoutineColor = (rid: number) => {
+    const c = colorByRoutineId.get(rid)
+    if (!c) return 'var(--mantine-color-indigo-6)'
+    if (c.includes('.')) {
+      const [name, shade] = c.split('.')
+      return 'var(--mantine-color-' + name + '-' + shade + ')'
+    }
+    return c
+  }
+
   // Select options for the filter
   const filterOptions = useMemo(
     () => [
@@ -377,7 +387,7 @@ export default function HistoryPage() {
                 const routineTitle = routineTitleById.get(activity.routineId) ?? `Routine ${activity.routineId}`
                 const isToday = activity.date === today
                 return (
-                  <Card key={activity.id ?? activity.createdAt.getTime()} padding="md" radius="md" onClick={() => handleActivityClick(activity)} style={{ cursor: 'pointer' }}>
+                  <Card key={activity.id ?? activity.createdAt.getTime()} padding="md" radius="md" onClick={() => handleActivityClick(activity)} style={{ cursor: 'pointer', borderLeft: '4px solid ' + getRoutineColor(activity.routineId) }}>
                     <Group justify="space-between" wrap="nowrap" align="center">
                       <Stack gap={4} style={{ flex: 1, minWidth: 0 }}>
                         <Text fw={700} size="sm" truncate="end">{routineTitle}</Text>
@@ -464,7 +474,10 @@ export default function HistoryPage() {
                           closeDay()
                           handleActivityClick(a)
                         }}
-                        style={{ cursor: 'pointer' }}
+                        style={{ 
+                          cursor: 'pointer',
+                          borderLeft: '4px solid ' + getRoutineColor(a.routineId)
+                        }}
                       >
                         <Group justify="space-between" align="center">
                           <Stack gap={4} style={{ flex: 1, minWidth: 0 }}>

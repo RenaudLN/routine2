@@ -76,7 +76,7 @@ export default function RoutineDetailPage() {
              <Stack gap={4}>
                 <Title order={2} style={{ fontWeight: 800 }}>{routine.title}</Title>
                 <Group gap="xs">
-                  <Badge variant="dot" color={routine.color || 'indigo'}>v{routine.version}</Badge>
+                  <Badge variant="dot" color='indigo'>v{routine.version}</Badge>
                   <Text size="sm" c="dimmed">{routine.fields.length} Fields defined</Text>
                 </Group>
              </Stack>
@@ -138,7 +138,7 @@ export default function RoutineDetailPage() {
           <Card radius="lg" padding="lg">
              <Stack gap="xs">
                 <Group gap="xs">
-                  <ThemeIcon variant="light" color={routine.color || 'indigo'} size="sm">
+                  <ThemeIcon variant="light" color='indigo' size="sm">
                     <IconSettings size={16} />
                   </ThemeIcon>
                   <Text fw={700} size="sm">About this routine</Text>
@@ -150,7 +150,7 @@ export default function RoutineDetailPage() {
 
         <Stack gap="md">
           <Group gap="xs">
-             <ThemeIcon variant="light" color={routine.color || 'indigo'} size="sm">
+             <ThemeIcon variant="light" color='indigo' size="sm">
                 <IconListDetails size={16} />
              </ThemeIcon>
              <Text fw={700}>Schema definition</Text>
@@ -168,7 +168,7 @@ export default function RoutineDetailPage() {
                       <Text fw={700} size="sm">{field.name}</Text>
                       <Badge size="xs" variant="outline">{field.type}</Badge>
                       {field.required && <Badge size="xs" color="red" variant="light">required</Badge>}
-                      {field.showOnSummaryCard && <Badge size="xs" color={routine.color || 'indigo'} variant="light">summary</Badge>}
+                      {field.showOnSummaryCard && <Badge size="xs" color='indigo' variant="light">summary</Badge>}
                     </Group>
                     {field.description && (
                       <Text size="xs" c="dimmed">{field.description}</Text>
@@ -187,7 +187,7 @@ export default function RoutineDetailPage() {
           radius="md" 
           onClick={() => navigate(`/routines/${routine.routineId}/record`)}
           variant="gradient"
-          gradient={{ from: routine.color || 'indigo', to: 'cyan' }}
+          gradient={{ from: 'indigo', to: 'cyan' }}
         >
           Record a Session
         </Button>

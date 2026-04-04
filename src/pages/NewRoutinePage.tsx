@@ -5,7 +5,7 @@ import {
   Button,
   Checkbox,
   Divider,
-  ColorPicker,
+  ColorInput,
   Group,
   Loader,
   NumberInput,
@@ -32,7 +32,7 @@ import {
   IconListDetails,
   IconCheck,
   IconBell,
-  IconPalette,
+
   IconInfoCircle,
 } from '@tabler/icons-react'
 import { useRoutineStore, getRandomColor } from '../store/routineStore'
@@ -466,28 +466,20 @@ export default function NewRoutinePage() {
             </Group>
 
             <Stack gap={4}>
-               <Text size="sm" fw={500}>Routine Color</Text>
-               <Group align="flex-start" wrap="nowrap" gap="md">
-                  <Paper withBorder p="xs" radius="md" bg="var(--mantine-color-body)">
-                     <ColorPicker 
-                        value={color} 
-                        onChange={setColor} 
-                        format="hsl"
-                        swatches={swatches}
-                        swatchesPerRow={7}
-                     />
-                  </Paper>
-                  <Stack gap="xs" style={{ flex: 1 }}>
-                     <Group gap="xs">
-                        <ThemeIcon size="lg" radius="md" color={color}>
-                           <IconPalette size={18} />
-                        </ThemeIcon>
-                        <Text size="xs" c="dimmed">Current Preview</Text>
-                     </Group>
-                     <Button variant="light" size="xs" onClick={() => setColor(getRandomColor())}>
-                        Randomize
-                     </Button>
-                  </Stack>
+               <Group align="flex-end" wrap="nowrap" gap="sm">
+                  <ColorInput 
+                    label="Routine Color"
+                    placeholder="Pick color"
+                    value={color} 
+                    onChange={setColor} 
+                    swatches={swatches}
+                    swatchesPerRow={10}
+                    style={{ flex: 1 }}
+                    radius="md"
+                  />
+                  <Button variant="light" size="sm" radius="md" onClick={() => setColor(getRandomColor())} h={36}>
+                    Randomize
+                  </Button>
                </Group>
             </Stack>
 
@@ -584,7 +576,7 @@ export default function NewRoutinePage() {
             gradient={{ from: 'indigo', to: 'cyan' }}
             leftSection={<IconCheck size={18} />}
           >
-            {isEdit ? 'Save New Version' : 'Create Routine'}
+            {isEdit ? 'Save' : 'Create Routine'}
           </Button>
         </Group>
       </Stack>
