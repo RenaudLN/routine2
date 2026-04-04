@@ -13,10 +13,10 @@ export default defineConfig({
       filename: 'sw.ts',
       registerType: 'autoUpdate',
       injectRegister: 'inline', // Inlines the registration script to avoid 404s on registerSW.js
-      includeAssets: ['favicon.svg', 'pwa-192.png', 'pwa-512.png'],
+      includeAssets: ['favicon.ico', 'logo-color.svg', 'screenshots/narrow.png'],
       manifest: {
-        name: 'Routine Tracker',
-        short_name: 'Routines',
+        name: 'Routine',
+        short_name: 'Routine',
         description: 'Track and manage your daily habits',
         theme_color: '#863bff',
         background_color: '#ffffff',
@@ -26,22 +26,40 @@ export default defineConfig({
         start_url: '/routine2/',
         icons: [
           {
-            src: 'pwa-192.png',
-            sizes: '192x192',
-            type: 'image/png',
+            "src": "logo-color.svg",
+            "sizes": "512x512"
           },
           {
-            src: 'pwa-512.png',
-            sizes: '512x512',
-            type: 'image/png',
+            "src": "logo-color.svg",
+            "sizes": "192x192"
           },
           {
-            src: 'pwa-512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any maskable',
+            "src": "logo-color.svg",
+            "sizes": "144x144"
+          },
+          {
+            "src": "logo-color.svg",
+            "sizes": "96x96"
+          },
+          {
+            "src": "logo-color.svg",
+            "sizes": "72x72"
+          },
+          {
+            "src": "logo-color.svg",
+            "sizes": "48x48"
+          }
+        ],
+        screenshots: [
+          {
+            "src": "screenshots/narrow.png",
+            "sizes": "800x1600",
+            "type": "image/png",
+            "form_factor": "narrow",
+            "label": "Application"
           },
         ],
+        shortcuts: [],
       },
       devOptions: {
         enabled: true,

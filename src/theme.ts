@@ -2,9 +2,9 @@ import { createTheme, rem } from '@mantine/core';
 
 export const theme = createTheme({
   primaryColor: 'indigo',
-  fontFamily: 'Inter, sans-serif',
+  fontFamily: "'Atkinson-Hyperlegible', Inter, sans-serif",
   headings: {
-    fontFamily: 'Inter, sans-serif',
+    fontFamily: "'Atkinson-Hyperlegible', Inter, sans-serif",
     fontWeight: '700',
   },
   radius: {
