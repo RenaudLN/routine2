@@ -279,7 +279,7 @@ export default function NewRoutinePage() {
                <ThemeIcon variant="light" color="indigo" radius="md">
                   <IconSettings size={18} />
                </ThemeIcon>
-               <Text f>Basic Info</Text>
+               <Text fw={700}>Basic Info</Text>
             </Group>
 
             <TextInput
@@ -313,7 +313,7 @@ export default function NewRoutinePage() {
                 <ThemeIcon variant="light" color="indigo" radius="md">
                     <IconListDetails size={18} />
                 </ThemeIcon>
-                <Text f>Fields Configuration</Text>
+                <Text fw={700}>Fields Configuration</Text>
               </Group>
            </Group>
 
@@ -460,7 +460,7 @@ export default function NewRoutinePage() {
               <ThemeIcon variant="light" color="blue" radius="md">
                 <IconInfoCircle size={18} />
               </ThemeIcon>
-              <Text f>Additional Info</Text>
+              <Text fw={700}>Additional Info</Text>
             </Group>
 
             <Stack gap={4}>
@@ -471,7 +471,7 @@ export default function NewRoutinePage() {
                     value={color} 
                     onChange={setColor} 
                     swatches={swatches}
-                    swatchesPerRo
+                    swatchesPerRow={10}
                     style={{ flex: 1 }}
                     radius="md"
                   />
@@ -520,7 +520,7 @@ export default function NewRoutinePage() {
                 <ThemeIcon variant="light" color="orange" radius="md">
                   <IconBell size={18} />
                 </ThemeIcon>
-                <Text f>Reminders</Text>
+                <Text fw={700}>Reminders</Text>
               </Group>
 
               {reminders.map((reminder) => (
