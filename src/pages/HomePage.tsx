@@ -11,14 +11,12 @@ import {
   ThemeIcon,
   Container,
   Alert,
-  Badge,
 } from '@mantine/core'
 import {
   IconSettings,
   IconPlus,
   IconActivity,
   IconBell,
-  IconCheck,
 } from '@tabler/icons-react'
 import { useNavigate } from 'react-router-dom'
 import { useRoutineStore } from '../store/routineStore'
@@ -149,11 +147,6 @@ export default function HomePage() {
                     <Stack gap={2} style={{ flex: 1 }}>
                       <Group gap="xs" align="center">
                         <Text fw={700} size="lg">{routine.title}</Text>
-                        {progress.isMet && (
-                          <Badge color="green" variant="light" leftSection={<IconCheck size={10} />}>
-                            Goal Met
-                          </Badge>
-                        )}
                       </Group>
                       <Group gap="xs">
                         {routine.description && (
@@ -163,7 +156,7 @@ export default function HomePage() {
                         )}
                         {progress.target > 0 && (
                           <Text size="xs" c="dimmed" fw={500}>
-                            {progress.current}/{progress.target} {progress.periodLabel}
+                            {progress.current}/{progress.target}{progress.isMet ? ' 🎉' : ''} {progress.periodLabel}
                           </Text>
                         )}
                       </Group>
