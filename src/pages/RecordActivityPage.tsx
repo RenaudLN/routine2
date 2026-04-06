@@ -126,7 +126,7 @@ export default function RecordActivityPage() {
         })
 
         // Check if objective was just met
-        const newActivities: Pick<Activity, "date">[] = [...existingActivities, { date }]
+        const newActivities: Pick<Activity, "date" | "routineId">[] = [...existingActivities, { date, routineId: routine.routineId }]
         const newProgress = getRoutineProgress(routine, newActivities, date)
 
         if (!oldProgress.isMet && newProgress.isMet) {

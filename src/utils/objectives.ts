@@ -10,22 +10,25 @@ export interface RoutineProgress {
 
 export function getRoutineProgress(
   routine: RoutineVersion,
-  activities: Pick<Activity, 'date'>[],
+  activities: Pick<Activity, 'date' | 'routineId'>[],
   date: string = dayjs().format('YYYY-MM-DD')
 ): RoutineProgress {
-  const { frequency } = routine
+  const { frequency, routineId } = routine
   if (!frequency) {
     return { current: 0, target: 0, isMet: false, periodLabel: '' }
   }
 
+  // Filter activities for this specific routine
+  const routineActivities = activities.filter((a) => a.routineId === routineId)
+
   const d = dayjs(date)
-  let periodActivities: Pick<Activity, 'date'>[] = []
+  let periodActivities: Pick<Activity, 'date' | 'routineId'>[] = []
   let target = 1
   let periodLabel = ''
 
   switch (frequency.type) {
     case 'daily':
-      periodActivities = activities.filter((a) => a.date === date)
+      periodActivities = routineActivities.filter((a) => a.date === date)
       target = 1
       periodLabel = 'today'
       break
@@ -33,7 +36,7 @@ export function getRoutineProgress(
       {
         const startOfWeek = d.startOf('week').format('YYYY-MM-DD')
         const endOfWeek = d.endOf('week').format('YYYY-MM-DD')
-        periodActivities = activities.filter(
+        periodActivities = routineActivities.filter(
           (a) => a.date >= startOfWeek && a.date <= endOfWeek
         )
         target = frequency.value || 1
@@ -44,7 +47,7 @@ export function getRoutineProgress(
       {
         const startOfMonth = d.startOf('month').format('YYYY-MM-DD')
         const endOfMonth = d.endOf('month').format('YYYY-MM-DD')
-        periodActivities = activities.filter(
+        periodActivities = routineActivities.filter(
           (a) => a.date >= startOfMonth && a.date <= endOfMonth
         )
         target = frequency.value || 1
@@ -54,17 +57,17 @@ export function getRoutineProgress(
     case 'specific_days':
       {
         const isTodayTarget = frequency.days?.includes(d.day())
-        periodActivities = activities.filter((a) => a.date === date)
+        periodActivities = routineActivities.filter((a) => a.date === date)
         target = isTodayTarget ? 1 : 0
         periodLabel = 'today'
       }
       break
   }
 
-  const current = periodActivities.length
-  // Objective is met if we've reached the target OR if there is no target (target=0) for specific_days.
-  // We exclude the case where frequency itself is missing (handled at the start of function).
-  const isMet = target === 0 || current >= target
+  // We count unique days where the routine was completed within the period.
+  // This ensures that doing a routine multiple times on the same day only counts once towards the goal.
+  const current = new Set(periodActivities.map((a) => a.date)).size
+  const isMet = target > 0 && current >= target
 
   return { current, target, isMet, periodLabel }
 }
