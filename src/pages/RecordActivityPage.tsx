@@ -9,7 +9,10 @@ import { notifications } from '@mantine/notifications'
 import { IconArrowLeft, IconAlertCircle, IconCheck, IconCalendar } from '@tabler/icons-react'
 import { useRoutineStore } from '../store/routineStore'
 import { useActivityStore, todayISO } from '../store/activityStore'
-import type { RoutineVersion, FieldValue } from '../types'
+import { db } from '../db'
+import confetti from 'canvas-confetti'
+import { getRoutineProgress, getConfettiProbability } from '../utils/objectives'
+import type { RoutineVersion, FieldValue, Activity } from '../types'
 
 export default function RecordActivityPage() {
   const params = useParams<{ id?: string, activityId?: string }>()
@@ -106,6 +109,14 @@ export default function RecordActivityPage() {
         })
         navigate('/history')
       } else {
+        // Fetch existing activities for this routine to check progress change
+        const existingActivities = await db.activities
+          .where('routineId')
+          .equals(routine.routineId)
+          .toArray()
+        
+        const oldProgress = getRoutineProgress(routine, existingActivities, date)
+
         await addActivity({
           routineId: routine.routineId,
           routineVersion: routine.version,
@@ -113,6 +124,23 @@ export default function RecordActivityPage() {
           status: 'complete',
           fieldValues: buildFieldValues(),
         })
+
+        // Check if objective was just met
+        const newActivities: Pick<Activity, "date">[] = [...existingActivities, { date }]
+        const newProgress = getRoutineProgress(routine, newActivities, date)
+
+        if (!oldProgress.isMet && newProgress.isMet) {
+          const probability = getConfettiProbability(routine.frequency?.type || 'daily')
+          if (Math.random() < probability) {
+            void confetti({
+              particleCount: 150,
+              spread: 70,
+              origin: { y: 0.6 },
+              zIndex: 2000, // Make sure it's above everything
+            })
+          }
+        }
+
         notifications.show({
           title: 'Activity saved!',
           message: `${routine.title} recorded for ${date}.`,
