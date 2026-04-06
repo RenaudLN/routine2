@@ -1,4 +1,5 @@
 import { db } from '../db'
+import { getRoutineProgress } from './objectives'
 
 export async function requestNotificationPermission(): Promise<boolean> {
   if (!('Notification' in window)) {
@@ -92,6 +93,25 @@ export async function showLocalNotification(
       .first()
     
     if (alreadyNotified) return
+
+    // NEW: Check if objectives are already met
+    const routine = await db.routineVersions
+      .where('routineId')
+      .equals(routineId)
+      .filter((v) => !!v.isLatest && !v.deletedAt)
+      .first()
+    
+    if (routine) {
+      const activities = await db.activities
+        .where('routineId')
+        .equals(routineId)
+        .toArray()
+      
+      const progress = getRoutineProgress(routine, activities, todayStr)
+      if (progress.isMet) {
+        return
+      }
+    }
   }
 
   const options = {

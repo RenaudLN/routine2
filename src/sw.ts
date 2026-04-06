@@ -1,5 +1,6 @@
 /// <reference lib="webworker" />
 import { db } from './db'
+import { getRoutineProgress } from './utils/objectives'
 
 interface ManifestEntry {
   url: string
@@ -77,12 +78,13 @@ async function checkAndShowReminders() {
     for (const routine of routines) {
       if (!routine.reminders || routine.reminders.length === 0) continue
 
-      const activity = await db.activities
-        .where('[routineId+date]')
-        .equals([routine.routineId, todayStr])
-        .first()
+      const activities = await db.activities
+        .where('routineId')
+        .equals(routine.routineId)
+        .toArray()
 
-      if (activity?.status === 'complete') continue
+      const progress = getRoutineProgress(routine, activities, todayStr)
+      if (progress.isMet) continue
 
       for (const reminder of routine.reminders) {
         // If the reminder time has passed or is now

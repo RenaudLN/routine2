@@ -62,7 +62,9 @@ export function getRoutineProgress(
   }
 
   const current = periodActivities.length
-  const isMet = target > 0 && current >= target
+  // Objective is met if we've reached the target OR if there is no target (target=0) for specific_days.
+  // We exclude the case where frequency itself is missing (handled at the start of function).
+  const isMet = target === 0 || current >= target
 
   return { current, target, isMet, periodLabel }
 }
