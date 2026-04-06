@@ -156,7 +156,7 @@ export default function HomePage() {
                         )}
                         {progress.target > 0 && (
                           <Text size="xs" c="dimmed" fw={500}>
-                            {progress.current}/{progress.target}{progress.isMet ? ' 🎉' : ''} {progress.periodLabel}
+                            {progress.current}/{progress.target} {progress.periodLabel}{progress.isMet ? ' 🎉' : ''}
                           </Text>
                         )}
                       </Group>
