@@ -1,10 +1,11 @@
 import Dexie, { type EntityTable } from 'dexie'
-import type { Routine, RoutineVersion, Activity } from '../types'
+import type { Routine, RoutineVersion, Activity, NotificationLog } from '../types'
 
 class RoutineDatabase extends Dexie {
   routines!: EntityTable<Routine, 'id'>
   routineVersions!: EntityTable<RoutineVersion, 'id'>
   activities!: EntityTable<Activity, 'id'>
+  notificationLogs!: EntityTable<NotificationLog, 'id'>
 
   constructor() {
     super('RoutineTrackerDB')
@@ -30,6 +31,11 @@ class RoutineDatabase extends Dexie {
       routines: '++id, createdAt',
       routineVersions: '++id, routineId, [routineId+version], isLatest, deletedAt',
       activities: '++id, routineId, [routineId+date], date, status',
+    })
+
+    // v4 adds notification tracking
+    this.version(4).stores({
+      notificationLogs: '++id, [routineId+reminderId+date], routineId, date',
     })
   }
 }

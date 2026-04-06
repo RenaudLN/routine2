@@ -33,7 +33,12 @@ export default function HomePage() {
 
   useEffect(() => {
     void fetchRoutines()
-    void checkNotificationPermission().then(setNotificationPermission)
+    void checkNotificationPermission().then((perm) => {
+      setNotificationPermission(perm)
+      if (perm === 'granted') {
+        void registerPeriodicSync()
+      }
+    })
   }, [fetchRoutines])
 
   const handleEnableNotifications = async () => {

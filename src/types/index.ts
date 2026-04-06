@@ -110,3 +110,15 @@ export interface FieldValue {
   /** string for Text/Date/Option, number for Number/Rating, null if not filled in. */
   value: string | number | null
 }
+
+// ---------------------------------------------------------------------------
+// Notifications
+// ---------------------------------------------------------------------------
+
+export interface NotificationLog {
+  id?: number
+  routineId: number
+  reminderId: string
+  date: string // YYYY-MM-DD
+  shownAt: Date
+}

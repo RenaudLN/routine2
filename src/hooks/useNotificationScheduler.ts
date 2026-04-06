@@ -5,7 +5,6 @@ import { showLocalNotification } from '../utils/notifications'
 export function useNotificationScheduler() {
   const { routines } = useRoutineStore()
   const timers = useRef<number[]>([])
-  const notifiedReminders = useRef<Set<string>>(new Set()) // routineId-time
 
   useEffect(() => {
     // Clear old timers
@@ -13,6 +12,7 @@ export function useNotificationScheduler() {
     timers.current = []
 
     const now = new Date()
+    const currentTimeStr = now.toTimeString().slice(0, 5)
 
     routines.forEach((routine) => {
       if (!routine.reminders) return
@@ -26,22 +26,30 @@ export function useNotificationScheduler() {
 
         const diff = target.getTime() - now.getTime()
 
-        // If it's in the future (within the next 24 hours)
+        // If it's in the future
         if (diff > 0) {
-          const reminderKey = `${routine.routineId}-${reminder.time}-${target.toDateString()}`
-          
           const timerId = window.setTimeout(() => {
-            if (!notifiedReminders.current.has(reminderKey)) {
-              showLocalNotification(
-                routine.title,
-                `It's time for your "${routine.title}" routine!`,
-                `/routine2/routines/${routine.routineId}/record`
-              )
-              notifiedReminders.current.add(reminderKey)
-            }
+            void showLocalNotification(
+              routine.title,
+              `It's time for your "${routine.title}" routine!`,
+              `/routine2/routines/${routine.routineId}/record`,
+              routine.routineId,
+              reminder.id
+            )
           }, diff)
 
           timers.current.push(timerId)
+        } else if (reminder.time <= currentTimeStr) {
+          // It was earlier today. Check if we missed it and show if needed.
+          // We only do this if it's within a reasonable window (e.g., today)
+          // showLocalNotification already checks the DB so it won't duplicate.
+          void showLocalNotification(
+            routine.title,
+            `It's time for your "${routine.title}" routine!`,
+            `/routine2/routines/${routine.routineId}/record`,
+            routine.routineId,
+            reminder.id
+          )
         }
       })
     })

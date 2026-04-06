@@ -1,3 +1,5 @@
+import { db } from '../db'
+
 export async function requestNotificationPermission(): Promise<boolean> {
   if (!('Notification' in window)) {
     console.error('This browser does not support notifications.')
@@ -5,7 +7,7 @@ export async function requestNotificationPermission(): Promise<boolean> {
   }
 
   try {
-    const permission = await Notification.permission
+    const permission = Notification.permission
     if (permission === 'granted') return true
     
     const result = await Notification.requestPermission()
@@ -38,7 +40,7 @@ export async function registerPeriodicSync(): Promise<void> {
       if (status.state === 'granted') {
         // @ts-expect-error - periodicSync is not in all type definitions
         await registration.periodicSync.register('reminder-sync', {
-          minInterval: 60 * 60 * 1000, // Try to sync every hour
+          minInterval: 15 * 60 * 1000, // Try to sync every 15 minutes
         })
         console.log('Periodic background sync registered')
       }
@@ -55,8 +57,6 @@ export async function registerPushSubscription(): Promise<PushSubscription | nul
 
   try {
     const registration = await navigator.serviceWorker.ready
-    // For local-only we don't actually NEED a push subscription, 
-    // but keeping it for future compatibility if a VAPID key is added.
     const subscription = await registration.pushManager.getSubscription()
     if (subscription) return subscription
 
@@ -69,8 +69,30 @@ export async function registerPushSubscription(): Promise<PushSubscription | nul
   }
 }
 
-export function showLocalNotification(title: string, body: string, url = '/routine2/') {
+export async function showLocalNotification(
+  title: string, 
+  body: string, 
+  url = '/routine2/',
+  routineId?: number,
+  reminderId?: string
+) {
   if (!('Notification' in window) || Notification.permission !== 'granted') return
+
+  const now = new Date()
+  const yyyy = now.getFullYear()
+  const mm = String(now.getMonth() + 1).padStart(2, '0')
+  const dd = String(now.getDate()).padStart(2, '0')
+  const todayStr = `${yyyy}-${mm}-${dd}`
+
+  // If we have routine/reminder info, check if already notified today
+  if (routineId !== undefined && reminderId !== undefined) {
+    const alreadyNotified = await db.notificationLogs
+      .where('[routineId+reminderId+date]')
+      .equals([routineId, reminderId, todayStr])
+      .first()
+    
+    if (alreadyNotified) return
+  }
 
   const options = {
     body,
@@ -81,11 +103,20 @@ export function showLocalNotification(title: string, body: string, url = '/routi
 
   // Use service worker to show notification if possible (works better in background)
   if ('serviceWorker' in navigator) {
-    void navigator.serviceWorker.ready.then((registration) => {
-      void registration.showNotification(title, options)
-    })
+    const registration = await navigator.serviceWorker.ready
+    await registration.showNotification(title, options)
   } else {
     // Fallback to simple Notification
     new Notification(title, options)
+  }
+
+  // Log it
+  if (routineId !== undefined && reminderId !== undefined) {
+    await db.notificationLogs.add({
+      routineId,
+      reminderId,
+      date: todayStr,
+      shownAt: new Date(),
+    })
   }
 }

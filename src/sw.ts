@@ -63,7 +63,10 @@ self.addEventListener('fetch', (event) => {
 
 async function checkAndShowReminders() {
   const now = new Date()
-  const todayStr = now.toISOString().slice(0, 10) // YYYY-MM-DD
+  const yyyy = now.getFullYear()
+  const mm = String(now.getMonth() + 1).padStart(2, '0')
+  const dd = String(now.getDate()).padStart(2, '0')
+  const todayStr = `${yyyy}-${mm}-${dd}`
   const currentTimeStr = now.toTimeString().slice(0, 5) // HH:mm
 
   try {
@@ -82,13 +85,29 @@ async function checkAndShowReminders() {
       if (activity?.status === 'complete') continue
 
       for (const reminder of routine.reminders) {
-        if (reminder.time === currentTimeStr) {
-          await self.registration.showNotification(routine.title, {
-            body: `It's time for your "${routine.title}" routine!`,
-            icon: '/routine2/pwa-192.png',
-            badge: '/routine2/favicon.svg',
-            data: { url: `/routine2/routines/${routine.routineId}/record` },
-          })
+        // If the reminder time has passed or is now
+        if (reminder.time <= currentTimeStr) {
+          // Check if we already notified for this today
+          const alreadyNotified = await db.notificationLogs
+            .where('[routineId+reminderId+date]')
+            .equals([routine.routineId, reminder.id, todayStr])
+            .first()
+
+          if (!alreadyNotified) {
+            await self.registration.showNotification(routine.title, {
+              body: `It's time for your "${routine.title}" routine!`,
+              icon: '/routine2/pwa-192.png',
+              badge: '/routine2/favicon.svg',
+              data: { url: `/routine2/routines/${routine.routineId}/record` },
+            })
+
+            await db.notificationLogs.add({
+              routineId: routine.routineId,
+              reminderId: reminder.id,
+              date: todayStr,
+              shownAt: new Date(),
+            })
+          }
         }
       }
     }
