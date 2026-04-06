@@ -1,6 +1,14 @@
 import { db } from '../db'
 import { getRoutineProgress } from './objectives'
 
+export interface NotificationItem {
+  title: string
+  body: string
+  url: string
+  routineId?: number
+  reminderId?: string
+}
+
 export async function requestNotificationPermission(): Promise<boolean> {
   if (!('Notification' in window)) {
     console.error('This browser does not support notifications.')
@@ -77,6 +85,11 @@ export async function showLocalNotification(
   routineId?: number,
   reminderId?: string
 ) {
+  return showLocalNotifications([{ title, body, url, routineId, reminderId }])
+}
+
+export async function showLocalNotifications(items: NotificationItem[]) {
+  if (items.length === 0) return
   if (!('Notification' in window) || Notification.permission !== 'granted') return
 
   const now = new Date()
@@ -85,33 +98,54 @@ export async function showLocalNotification(
   const dd = String(now.getDate()).padStart(2, '0')
   const todayStr = `${yyyy}-${mm}-${dd}`
 
-  // If we have routine/reminder info, check if already notified today
-  if (routineId !== undefined && reminderId !== undefined) {
-    const alreadyNotified = await db.notificationLogs
-      .where('[routineId+reminderId+date]')
-      .equals([routineId, reminderId, todayStr])
-      .first()
-    
-    if (alreadyNotified) return
+  const pendingItems: NotificationItem[] = []
 
-    // NEW: Check if objectives are already met
-    const routine = await db.routineVersions
-      .where('routineId')
-      .equals(routineId)
-      .filter((v) => !!v.isLatest && !v.deletedAt)
-      .first()
-    
-    if (routine) {
-      const activities = await db.activities
-        .where('routineId')
-        .equals(routineId)
-        .toArray()
+  for (const item of items) {
+    if (item.routineId !== undefined && item.reminderId !== undefined) {
+      const alreadyNotified = await db.notificationLogs
+        .where('[routineId+reminderId+date]')
+        .equals([item.routineId, item.reminderId, todayStr])
+        .first()
       
-      const progress = getRoutineProgress(routine, activities, todayStr)
-      if (progress.isMet) {
-        return
+      if (alreadyNotified) continue
+
+      const routine = await db.routineVersions
+        .where('routineId')
+        .equals(item.routineId)
+        .filter((v) => !!v.isLatest && !v.deletedAt)
+        .first()
+      
+      if (routine) {
+        const activities = await db.activities
+          .where('routineId')
+          .equals(item.routineId)
+          .toArray()
+        
+        const progress = getRoutineProgress(routine, activities, todayStr)
+        if (progress.isMet) {
+          continue
+        }
       }
     }
+    pendingItems.push(item)
+  }
+
+  if (pendingItems.length === 0) return
+
+  let title: string
+  let body: string
+  let url: string
+
+  if (pendingItems.length === 1) {
+    const item = pendingItems[0]
+    title = item.title
+    body = item.body
+    url = item.url
+  } else {
+    title = `${pendingItems.length} Routine Reminders`
+    const routineTitles = pendingItems.map(i => i.title).join(', ')
+    body = `It's time for your routines: ${routineTitles}`
+    url = '/routine2/'
   }
 
   const options = {
@@ -121,22 +155,22 @@ export async function showLocalNotification(
     data: { url },
   }
 
-  // Use service worker to show notification if possible (works better in background)
   if ('serviceWorker' in navigator) {
     const registration = await navigator.serviceWorker.ready
     await registration.showNotification(title, options)
   } else {
-    // Fallback to simple Notification
     new Notification(title, options)
   }
 
-  // Log it
-  if (routineId !== undefined && reminderId !== undefined) {
-    await db.notificationLogs.add({
-      routineId,
-      reminderId,
-      date: todayStr,
-      shownAt: new Date(),
-    })
+  // Log all
+  for (const item of pendingItems) {
+    if (item.routineId !== undefined && item.reminderId !== undefined) {
+      await db.notificationLogs.add({
+        routineId: item.routineId,
+        reminderId: item.reminderId,
+        date: todayStr,
+        shownAt: new Date(),
+      })
+    }
   }
 }

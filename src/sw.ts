@@ -75,6 +75,8 @@ async function checkAndShowReminders() {
       .filter((v) => !!v.isLatest && !v.deletedAt)
       .toArray()
 
+    const pendingReminders = []
+
     for (const routine of routines) {
       if (!routine.reminders || routine.reminders.length === 0) continue
 
@@ -96,22 +98,44 @@ async function checkAndShowReminders() {
             .first()
 
           if (!alreadyNotified) {
-            await self.registration.showNotification(routine.title, {
-              body: `It's time for your "${routine.title}" routine!`,
-              icon: '/routine2/pwa-192.png',
-              badge: '/routine2/favicon.svg',
-              data: { url: `/routine2/routines/${routine.routineId}/record` },
-            })
-
-            await db.notificationLogs.add({
-              routineId: routine.routineId,
-              reminderId: reminder.id,
-              date: todayStr,
-              shownAt: new Date(),
-            })
+            pendingReminders.push({ routine, reminder })
           }
         }
       }
+    }
+
+    if (pendingReminders.length === 0) return
+
+    let title: string
+    let body: string
+    let url: string
+
+    if (pendingReminders.length === 1) {
+      const { routine } = pendingReminders[0]
+      title = routine.title
+      body = `It's time for your "${routine.title}" routine!`
+      url = `/routine2/routines/${routine.routineId}/record`
+    } else {
+      title = `${pendingReminders.length} Routine Reminders`
+      const routineTitles = pendingReminders.map(p => p.routine.title).join(', ')
+      body = `It's time for your routines: ${routineTitles}`
+      url = '/routine2/'
+    }
+
+    await self.registration.showNotification(title, {
+      body,
+      icon: '/routine2/pwa-192.png',
+      badge: '/routine2/favicon.svg',
+      data: { url },
+    })
+
+    for (const { routine, reminder } of pendingReminders) {
+      await db.notificationLogs.add({
+        routineId: routine.routineId,
+        reminderId: reminder.id,
+        date: todayStr,
+        shownAt: new Date(),
+      })
     }
   } catch (err) {
     console.error('Service worker reminder check failed:', err)

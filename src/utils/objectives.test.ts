@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { getRoutineProgress } from './objectives'
-import { RoutineVersion, Activity } from '../types'
+import type { RoutineVersion, Activity } from '../types'
 
 describe('getRoutineProgress', () => {
   const routineBase: Partial<RoutineVersion> = {
