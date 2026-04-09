@@ -95,7 +95,7 @@ export default function HistoryPage() {
   }
 
   const handleDelete = async (id: number) => {
-    if (window.confirm('Are you sure you want to delete this activity?')) {
+    if (window.confirm('Are you sure you want to delete this session?')) {
       await deleteActivity(id)
       closeDetail()
     }
@@ -427,7 +427,7 @@ export default function HistoryPage() {
         >
           <Stack gap="md">
             <Group justify="space-between">
-               <Text size="sm" fw={700} c="dimmed">Activities</Text>
+               <Text size="sm" fw={700} c="dimmed">Sessions</Text>
                {!isAddingNew && (
                  <Button 
                   size="compact-xs" 
@@ -442,7 +442,7 @@ export default function HistoryPage() {
 
             {isAddingNew ? (
                <Stack gap="xs" p="sm" bg="var(--mantine-color-gray-0)" style={{ borderRadius: 'var(--mantine-radius-md)' }}>
-                 <Text size="xs" fw={700}>SELECT ROUTINE</Text>
+                 <Text size="xs" fw={700}>CHOOSE A ROUTINE</Text>
                  <Select
                    placeholder="Pick a routine"
                    data={routineSelectData}
@@ -460,7 +460,7 @@ export default function HistoryPage() {
               <>
                 {activitiesForSelectedDay.length === 0 ? (
                   <Box py="xl" style={{ textAlign: 'center' }}>
-                    <Text c="dimmed" size="sm">No activities recorded for this day.</Text>
+                    <Text c="dimmed" size="sm">No sessions recorded for this day.</Text>
                   </Box>
                 ) : (
                   <Stack gap="xs">
@@ -510,7 +510,7 @@ export default function HistoryPage() {
                <Title order={4}>
                 {selectedVersion?.title ||
                   routineTitleById.get(selectedActivity?.routineId ?? 0) ||
-                  'Activity Detail'}
+                  'Session Details'}
               </Title>
             </Group>
           }
@@ -521,7 +521,7 @@ export default function HistoryPage() {
           {loadingDetail ? (
             <Group justify="center" py="xl"><Loader variant="dots" /></Group>
           ) : !selectedActivity ? (
-            <Text>No activity selected</Text>
+            <Text>No session selected</Text>
           ) : (
             <Stack gap="lg">
               <Group justify="space-between" pt="md" style={{ borderRadius: 'var(--mantine-radius-md)' }}>
@@ -534,7 +534,7 @@ export default function HistoryPage() {
               </Group>
 
               <Stack gap="md">
-                <Text size="sm" fw={700} c="indigo">FIELDS DATA</Text>
+                <Text size="sm" fw={700} c="indigo">SESSION DATA</Text>
                 {selectedVersion?.fields.map((field) => {
                   const val = selectedActivity.fieldValues.find(
                     (fv) => fv.fieldName === field.name,

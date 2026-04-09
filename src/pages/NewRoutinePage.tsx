@@ -19,9 +19,11 @@ import {
   Title,
   Container,
   ThemeIcon,
-  Card,
   useMantineTheme,
+  Modal,
+  Space,
 } from '@mantine/core'
+import { useDisclosure } from '@mantine/hooks'
 import { notifications } from '@mantine/notifications'
 import {
   IconArrowLeft,
@@ -32,25 +34,28 @@ import {
   IconListDetails,
   IconCheck,
   IconBell,
-
   IconInfoCircle,
+  IconEye,
+  IconArrowDown,
+  IconArrowUp,
 } from '@tabler/icons-react'
 import { useRoutineStore, getRandomColor } from '../store/routineStore'
 import type { FieldType, RoutineField, FrequencyGoal, FrequencyType, Reminder } from '../types'
+import { RoutineFormFields } from '../components/RoutineFormFields'
 
 const FIELD_TYPES: { value: FieldType; label: string }[] = [
-  { value: 'Text', label: 'Text' },
+  { value: 'Text', label: 'Short text' },
   { value: 'LongText', label: 'Long text' },
   { value: 'Date', label: 'Date' },
   { value: 'Number', label: 'Number' },
   { value: 'Rating', label: 'Rating' },
-  { value: 'Option', label: 'Option' },
+  { value: 'Option', label: 'Select from list' },
 ]
 
 const FREQUENCY_TYPES: { value: FrequencyType; label: string }[] = [
   { value: 'daily', label: 'Daily' },
-  { value: 'weekly', label: 'Weekly (times per week)' },
-  { value: 'monthly', label: 'Monthly (times per month)' },
+  { value: 'weekly', label: 'Weekly' },
+  { value: 'monthly', label: 'Monthly' },
   { value: 'specific_days', label: 'Specific days of week' },
 ]
 
@@ -91,12 +96,16 @@ export default function NewRoutinePage() {
   const [description, setDescription] = useState('')
   const [color, setColor] = useState<string>(getRandomColor())
   const [fields, setFields] = useState<DraftField[]>([createDraftField()])
-  const [frequency, setFrequency] = useState<FrequencyGoal>({ type: 'daily' })
+  const [frequency, setFrequency] = useState<FrequencyGoal>({ type: 'daily', value: 1 })
   const [reminders, setReminders] = useState<Reminder[]>([])
   
   const [loading, setLoading] = useState(isEdit)
   const [saving, setSaving] = useState(false)
   const [titleError, setTitleError] = useState<string | null>(null)
+
+  const [previewOpened, { open: openPreview, close: closePreview }] = useDisclosure(false)
+  const [trackingInfoOpened, { open: openTrackingInfo, close: closeTrackingInfo }] = useDisclosure(false)
+  const [summaryInfoOpened, { open: openSummaryInfo, close: closeSummaryInfo }] = useDisclosure(false)
 
   useEffect(() => {
     if (isEdit && id) {
@@ -251,6 +260,22 @@ export default function NewRoutinePage() {
     )
   }
 
+  const getFrequencyDescription = () => {
+    const val = frequency.value || 1
+    switch (frequency.type) {
+      case 'daily':
+        return `Your goal is to complete this routine ${val} ${val > 1 ? 'times' : 'time'} every day.`
+      case 'weekly':
+        return `Your goal is to complete this routine ${val} ${val > 1 ? 'times' : 'time'} a week.`
+      case 'monthly':
+        return `Your goal is to complete this routine ${val} ${val > 1 ? 'times' : 'time'} a month.`
+      case 'specific_days':
+        return `Your goal is to complete this routine ${val} ${val > 1 ? 'times' : 'time'} on each selected day.`
+      default:
+        return ''
+    }
+  }
+
   return (
     <Container size="sm" p={0}>
       <Stack gap="xl">
@@ -268,43 +293,58 @@ export default function NewRoutinePage() {
              {isEdit ? 'Configure Routine' : 'New Routine'}
           </Title>
           <Text c="dimmed">
-             {isEdit ? 'Updates will create a new version of this routine.' : 'Define your routine structure.'}
+             {isEdit ? 'Changing these settings will create a new version of your routine history.' : 'Design how you want to track your progress.'}
           </Text>
         </Stack>
 
         {/* Basic Info */}
-        <Card radius="lg" padding="lg">
-          <Stack gap="lg">
-             <Group gap="xs" mb="xs">
-               <ThemeIcon variant="light" color="indigo" radius="md">
-                  <IconSettings size={18} />
-               </ThemeIcon>
-               <Text fw={700}>Basic Info</Text>
-            </Group>
+        <Stack gap="lg">
+            <Group gap="xs">
+              <ThemeIcon variant="light" color="indigo" radius="md">
+                <IconSettings size={18} />
+              </ThemeIcon>
+              <Text fw={700}>Basic Info</Text>
+          </Group>
 
-            <TextInput
-              label="Routine Name"
-              placeholder="e.g. Morning check-in"
-              required
+          <TextInput
+            label="Routine Name"
+            placeholder="e.g. Daily Meditation, Workout, or Plant Watering"
+            required
+            radius="md"
+            value={title}
+            onChange={(e) => {
+              setTitle(e.currentTarget.value)
+              if (e.currentTarget.value.trim()) setTitleError(null)
+            }}
+            error={titleError}
+          />
+          <Textarea
+            label="Description"
+            placeholder="e.g. A quick check-in to track my mental wellbeing and daily habits."
+            autosize
+            minRows={2}
+            radius="md"
+            value={description}
+            onChange={(e) => setDescription(e.currentTarget.value)}
+          />
+          <Group align="flex-end" wrap="nowrap" gap="sm">
+            <ColorInput 
+              label="Routine Color"
+              placeholder="Pick color"
+              value={color} 
+              onChange={setColor} 
+              swatches={swatches}
+              swatchesPerRow={10}
+              style={{ flex: 1 }}
               radius="md"
-              value={title}
-              onChange={(e) => {
-                setTitle(e.currentTarget.value)
-                if (e.currentTarget.value.trim()) setTitleError(null)
-              }}
-              error={titleError}
             />
-            <Textarea
-              label="Description"
-              placeholder="Optional — describe what this routine is for"
-              autosize
-              minRows={2}
-              radius="md"
-              value={description}
-              onChange={(e) => setDescription(e.currentTarget.value)}
-            />
-          </Stack>
-        </Card>
+            <Button variant="light" size="sm" radius="md" onClick={() => setColor(getRandomColor())} h={36}>
+              Randomize
+            </Button>
+          </Group>
+        </Stack>
+
+        <Divider />
 
         {/* Fields Configuration */}
         <Stack gap="md">
@@ -313,8 +353,26 @@ export default function NewRoutinePage() {
                 <ThemeIcon variant="light" color="indigo" radius="md">
                     <IconListDetails size={18} />
                 </ThemeIcon>
-                <Text fw={700}>Fields Configuration</Text>
+                <Text fw={700}>What would you like to track?</Text>
+                <ActionIcon 
+                  variant="subtle" 
+                  color="gray" 
+                  size="sm" 
+                  radius="xl"
+                  onClick={openTrackingInfo}
+                >
+                  <IconInfoCircle size={16} />
+                </ActionIcon>
               </Group>
+              <Button 
+                variant="light" 
+                size="xs" 
+                leftSection={<IconEye size={14} />}
+                onClick={openPreview}
+                disabled={fields.filter(f => f.name.trim()).length === 0}
+              >
+                Preview Form
+              </Button>
            </Group>
 
           <Stack gap="sm">
@@ -322,31 +380,11 @@ export default function NewRoutinePage() {
               <Paper key={field._key} withBorder p="md" radius="md" style={{ position: 'relative' }}>
                 <Stack gap="sm">
                   <Group align="flex-start" gap="sm" wrap="nowrap">
-                    <Stack gap={2} style={{ flexShrink: 0 }} mt={24}>
-                      <ActionIcon
-                        variant="subtle"
-                        size="sm"
-                        disabled={idx === 0}
-                        onClick={() => moveField(field._key, 'up')}
-                        aria-label="Move field up"
-                      >
-                        <IconGripVertical size={14} />
-                      </ActionIcon>
-                      <ActionIcon
-                        variant="subtle"
-                        size="sm"
-                        disabled={idx === fields.length - 1}
-                        onClick={() => moveField(field._key, 'down')}
-                        aria-label="Move field down"
-                      >
-                        <IconGripVertical size={14} />
-                      </ActionIcon>
-                    </Stack>
 
-                    <Stack gap="xs" style={{ flex: 1 }}>
+                    <Stack gap="xs" flex={1}>
                         <TextInput
-                          label="Field name"
-                          placeholder="e.g. Mood"
+                          label="Data / Question"
+                          placeholder="e.g. Mood, Hours of sleep, or Exercise type"
                           radius="md"
                           value={field.name}
                           onChange={(e) =>
@@ -354,7 +392,7 @@ export default function NewRoutinePage() {
                           }
                         />
                         <Select
-                          label="Type"
+                          label="Data type"
                           data={FIELD_TYPES}
                           radius="md"
                           value={field.type}
@@ -363,78 +401,111 @@ export default function NewRoutinePage() {
                           }
                           allowDeselect={false}
                         />
+
+                        <TextInput
+                          label="Hint / Instruction"
+                          placeholder="e.g. How are you feeling today? (1-5)"
+                          radius="md"
+                          value={field.description ?? ''}
+                          onChange={(e) =>
+                            updateField(field._key, { description: e.currentTarget.value })
+                          }
+                          style={{ flex: 1 }}
+                        />
+                        <Group gap="md" mb={10}>
+                          <Checkbox
+                            label="Required"
+                            checked={field.required}
+                            onChange={(e) =>
+                              updateField(field._key, { required: e.currentTarget.checked })
+                            }
+                          />
+                          <Group gap={4}>
+                            <Checkbox
+                              label="Show on summary card"
+                              checked={field.showOnSummaryCard}
+                              onChange={(e) =>
+                                updateField(field._key, { showOnSummaryCard: e.currentTarget.checked })
+                              }
+                            />
+                            <ActionIcon 
+                              variant="subtle" 
+                              color="gray" 
+                              size="xs" 
+                              radius="xl"
+                              onClick={openSummaryInfo}
+                            >
+                              <IconInfoCircle size={14} />
+                            </ActionIcon>
+                          </Group>
+                        </Group>
+
+                        {field.type === 'Rating' && (
+                          <NumberInput
+                            label="Maximum Rating"
+                            description="The highest value on the scale"
+                            min={2}
+                            max={100}
+                            radius="md"
+                            value={field.ratingMax ?? 5}
+                            onChange={(val) =>
+                              updateField(field._key, {
+                                ratingMax: typeof val === 'number' ? val : 5,
+                              })
+                            }
+                            
+                          />
+                        )}
+
+                        {field.type === 'Option' && (
+                          <TagsInput
+                            label="Options"
+                            description="Type an option and press Enter to add it"
+                            placeholder="Add choice…"
+                            radius="md"
+                            value={field.options ?? []}
+                            onChange={(val) => updateField(field._key, { options: val })}
+                          />
+                        )}
                     </Stack>
 
-                    <ActionIcon
-                      color="red"
-                      variant="light"
-                      size="lg"
-                      radius="md"
-                      mt={24}
-                      onClick={() => removeField(field._key)}
-                      aria-label="Remove field"
-                      disabled={fields.length === 1}
-                    >
-                      <IconTrash size={18} />
-                    </ActionIcon>
+                    <Stack gap="xs" align="center">
+                      <ActionIcon
+                        color="red"
+                        variant="light"
+                        size="lg"
+                        radius="md"
+                        mt={24}
+                        onClick={() => removeField(field._key)}
+                        aria-label="Remove field"
+                        disabled={fields.length === 1}
+                      >
+                        <IconTrash size={18} />
+                      </ActionIcon>
+                      <Space h="1.5rem" />
+                      <ActionIcon
+                        variant="light"
+                        size="md"
+                        radius="lg"
+                        disabled={idx === 0}
+                        onClick={() => moveField(field._key, 'up')}
+                        aria-label="Move field up"
+                      >
+                        <IconArrowUp size={16} />
+                      </ActionIcon>
+                      <ActionIcon
+                        variant="light"
+                        size="md"
+                        radius="lg"
+                        disabled={idx === fields.length - 1}
+                        onClick={() => moveField(field._key, 'down')}
+                        aria-label="Move field down"
+                      >
+                        <IconArrowDown size={16} />
+                      </ActionIcon>
+                    </Stack>
                   </Group>
 
-                  <Divider variant="dashed" />
-
-                  <TextInput
-                    label="Description"
-                    placeholder="Optional hint for this field"
-                    radius="md"
-                    value={field.description ?? ''}
-                    onChange={(e) =>
-                      updateField(field._key, { description: e.currentTarget.value })
-                    }
-                    style={{ flex: 1 }}
-                  />
-                  <Group gap="md" mb={10}>
-                    <Checkbox
-                      label="Required"
-                      checked={field.required}
-                      onChange={(e) =>
-                        updateField(field._key, { required: e.currentTarget.checked })
-                      }
-                    />
-                    <Checkbox
-                      label="Summary Card"
-                      checked={field.showOnSummaryCard}
-                      onChange={(e) =>
-                        updateField(field._key, { showOnSummaryCard: e.currentTarget.checked })
-                      }
-                    />
-                  </Group>
-
-                  {field.type === 'Rating' && (
-                    <NumberInput
-                      label="Max rating"
-                      description="The highest value on the scale"
-                      min={2}
-                      max={100}
-                      radius="md"
-                      value={field.ratingMax ?? 5}
-                      onChange={(val) =>
-                        updateField(field._key, {
-                          ratingMax: typeof val === 'number' ? val : 5,
-                        })
-                      }
-                      
-                    />
-                  )}
-
-                  {field.type === 'Option' && (
-                    <TagsInput
-                      label="Options"
-                      description="Type an option and press Enter to add it"
-                      placeholder="Add option…"
-                      radius="md"
-                      value={field.options ?? []}
-                      onChange={(val) => updateField(field._key, { options: val })}
-                    />
-                  )}
                 </Stack>
               </Paper>
             ))}
@@ -453,51 +524,41 @@ export default function NewRoutinePage() {
           </Button>
         </Stack>
 
+        <Divider />
+
         {/* Additional Info */}
-        <Card radius="lg" padding="lg" withBorder>
-          <Stack gap="xl">
-            <Group gap="xs">
-              <ThemeIcon variant="light" color="blue" radius="md">
-                <IconInfoCircle size={18} />
-              </ThemeIcon>
-              <Text fw={700}>Additional Info</Text>
-            </Group>
+        <Stack gap="xl">
+          <Group gap="xs">
+            <ThemeIcon variant="light" color="indigo" radius="md">
+              <IconInfoCircle size={18} />
+            </ThemeIcon>
+            <Text fw={700}>Frequency & Reminders</Text>
+          </Group>
 
-            <Stack gap={4}>
-               <Group align="flex-end" wrap="nowrap" gap="sm">
-                  <ColorInput 
-                    label="Routine Color"
-                    placeholder="Pick color"
-                    value={color} 
-                    onChange={setColor} 
-                    swatches={swatches}
-                    swatchesPerRow={10}
-                    style={{ flex: 1 }}
-                    radius="md"
-                  />
-                  <Button variant="light" size="sm" radius="md" onClick={() => setColor(getRandomColor())} h={36}>
-                    Randomize
-                  </Button>
-               </Group>
-            </Stack>
-
+          <Stack gap="sm">
             <Select
-              label="Frequency Goal"
+              label="Frequency"
               data={FREQUENCY_TYPES}
               value={frequency.type}
               onChange={(val) => setFrequency({ ...frequency, type: (val as FrequencyType) || 'daily' })}
               radius="md"
             />
-            {(frequency.type === 'weekly' || frequency.type === 'monthly') && (
-              <NumberInput
-                label={frequency.type === 'weekly' ? 'Times per week' : 'Times per month'}
-                min={1}
-                max={frequency.type === 'weekly' ? 7 : 31}
-                value={frequency.value ?? 1}
-                onChange={(val) => setFrequency({ ...frequency, value: typeof val === 'number' ? val : 1 })}
-                radius="md"
-              />
-            )}
+            
+            <NumberInput
+              label={
+                frequency.type === 'daily' ? 'Times per day' :
+                frequency.type === 'weekly' ? 'Times per week' :
+                frequency.type === 'monthly' ? 'Times per month' :
+                'Times per day'
+              }
+              description={getFrequencyDescription()}
+              min={1}
+              max={frequency.type === 'weekly' ? 7 : 31}
+              value={frequency.value ?? 1}
+              onChange={(val) => setFrequency({ ...frequency, value: typeof val === 'number' ? val : 1 })}
+              radius="md"
+            />
+
             {frequency.type === 'specific_days' && (
               <Checkbox.Group
                 label="On which days?"
@@ -511,53 +572,53 @@ export default function NewRoutinePage() {
                 </Group>
               </Checkbox.Group>
             )}
-
-            <Divider />
-
-            {/* Reminders */}
-            <Stack gap="lg">
-              <Group gap="xs" mb="xs">
-                <ThemeIcon variant="light" color="orange" radius="md">
-                  <IconBell size={18} />
-                </ThemeIcon>
-                <Text fw={700}>Reminders</Text>
-              </Group>
-
-              {reminders.map((reminder) => (
-                <Group key={reminder.id} align="flex-end">
-                  <TextInput
-                    label="Reminder time"
-                    type="time"
-                    value={reminder.time}
-                    onChange={(e) => updateReminder(reminder.id, e.currentTarget.value)}
-                    radius="md"
-                    style={{ flex: 1 }}
-                  />
-                  <ActionIcon
-                    color="red"
-                    variant="light"
-                    size="lg"
-                    radius="md"
-                    onClick={() => removeReminder(reminder.id)}
-                  >
-                    <IconTrash size={18} />
-                  </ActionIcon>
-                </Group>
-              ))}
-
-              <Button
-                variant="light"
-                color="orange"
-                leftSection={<IconPlus size={18} />}
-                onClick={addReminder}
-                fullWidth
-                radius="md"
-              >
-                Add Reminder
-              </Button>
-            </Stack>
           </Stack>
-        </Card>
+
+          <Divider variant="dashed" />
+
+          {/* Reminders */}
+          <Stack gap="lg">
+            <Group gap="xs" mb="xs">
+              <ThemeIcon variant="light" color="orange" radius="md">
+                <IconBell size={18} />
+              </ThemeIcon>
+              <Text fw={700}>Reminders</Text>
+            </Group>
+
+            {reminders.map((reminder) => (
+              <Group key={reminder.id} align="flex-end">
+                <TextInput
+                  label="Reminder time"
+                  type="time"
+                  value={reminder.time}
+                  onChange={(e) => updateReminder(reminder.id, e.currentTarget.value)}
+                  radius="md"
+                  style={{ flex: 1 }}
+                />
+                <ActionIcon
+                  color="red"
+                  variant="light"
+                  size="lg"
+                  radius="md"
+                  onClick={() => removeReminder(reminder.id)}
+                >
+                  <IconTrash size={18} />
+                </ActionIcon>
+              </Group>
+            ))}
+
+            <Button
+              variant="light"
+              color="orange"
+              leftSection={<IconPlus size={18} />}
+              onClick={addReminder}
+              fullWidth
+              radius="md"
+            >
+              Add Reminder
+            </Button>
+          </Stack>
+        </Stack>
 
         <Divider />
 
@@ -574,10 +635,78 @@ export default function NewRoutinePage() {
             gradient={{ from: 'indigo', to: 'cyan' }}
             leftSection={<IconCheck size={18} />}
           >
-            {isEdit ? 'Save' : 'Create Routine'}
+            {isEdit ? 'Save Changes' : 'Create Routine'}
           </Button>
         </Group>
       </Stack>
+
+      {/* Preview Modal */}
+      <Modal
+        opened={previewOpened}
+        onClose={closePreview}
+        title={
+          <Group gap="sm">
+            <ThemeIcon variant="light" color="indigo" radius="md">
+              <IconEye size={18} />
+            </ThemeIcon>
+            <Text fw={700}>Preview: {title || 'Untitled Routine'}</Text>
+          </Group>
+        }
+        size="md"
+        radius="lg"
+        centered
+      >
+        <Stack gap="lg" py="md">
+          <Text size="sm" c="dimmed">This is how your routine form will look when you record a session.</Text>
+          <Divider />
+          <RoutineFormFields
+            fields={fields
+              .filter(f => f.name.trim() !== '')
+              .map(f => ({
+                name: f.name,
+                type: f.type,
+                description: f.description,
+                required: f.required,
+                ratingMax: f.ratingMax,
+                options: f.options,
+                showOnSummaryCard: f.showOnSummaryCard
+              }))
+            }
+            fieldValues={{}}
+            setField={() => {}}
+            readOnly
+          />
+        </Stack>
+      </Modal>
+
+      {/* Info Modals */}
+      <Modal
+        opened={trackingInfoOpened}
+        onClose={closeTrackingInfo}
+        title="Tracking Information"
+        radius="lg"
+        centered
+      >
+        <Text size="sm">
+          Define the questions you want to answer each time you record this routine. 
+          For example, if you're tracking "Reading", you might want to track "Book title" (text) and "Pages read" (number).
+        </Text>
+        <Button onClick={closeTrackingInfo} fullWidth mt="lg" radius="md">Got it</Button>
+      </Modal>
+
+      <Modal
+        opened={summaryInfoOpened}
+        onClose={closeSummaryInfo}
+        title="Summary Card"
+        radius="lg"
+        centered
+      >
+        <Text size="sm">
+          If checked, this information will be visible directly on your history list. 
+          This is useful for seeing key data points (like your mood or a short note) without having to open every session detail.
+        </Text>
+        <Button onClick={closeSummaryInfo} fullWidth mt="lg" radius="md">Got it</Button>
+      </Modal>
     </Container>
   )
 }

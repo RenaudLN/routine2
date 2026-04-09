@@ -25,12 +25,14 @@ export function getRoutineProgress(
   let periodActivities: Pick<Activity, 'date' | 'routineId'>[] = []
   let target = 1
   let periodLabel = ''
+  let countUniqueDays = true
 
   switch (frequency.type) {
     case 'daily':
       periodActivities = routineActivities.filter((a) => a.date === date)
-      target = 1
+      target = frequency.value || 1
       periodLabel = 'today'
+      countUniqueDays = false // If target > 1 for daily, we must count sessions per day
       break
     case 'weekly':
       {
@@ -41,6 +43,7 @@ export function getRoutineProgress(
         )
         target = frequency.value || 1
         periodLabel = 'this week'
+        countUniqueDays = true
       }
       break
     case 'monthly':
@@ -52,21 +55,26 @@ export function getRoutineProgress(
         )
         target = frequency.value || 1
         periodLabel = 'this month'
+        countUniqueDays = true
       }
       break
     case 'specific_days':
       {
         const isTodayTarget = frequency.days?.includes(d.day())
         periodActivities = routineActivities.filter((a) => a.date === date)
-        target = isTodayTarget ? 1 : 0
+        target = isTodayTarget ? (frequency.value || 1) : 0
         periodLabel = 'today'
+        countUniqueDays = false
       }
       break
   }
 
-  // We count unique days where the routine was completed within the period.
-  // This ensures that doing a routine multiple times on the same day only counts once towards the goal.
-  const current = new Set(periodActivities.map((a) => a.date)).size
+  // For weekly/monthly, we count unique days (traditional habit tracking).
+  // For daily/specific_days, we count actual sessions on that day.
+  const current = countUniqueDays 
+    ? new Set(periodActivities.map((a) => a.date)).size
+    : periodActivities.length
+
   const isMet = target > 0 && current >= target
 
   return { current, target, isMet, periodLabel }

@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Badge, Button, Group, Loader, Stack, Text, Title, Container, Card, ThemeIcon, Divider } from '@mantine/core'
-import { IconArrowLeft, IconTrash, IconSettings, IconListDetails, IconEdit, IconCalendarEvent, IconBell } from '@tabler/icons-react'
+import { IconArrowLeft, IconTrash, IconEdit, IconListDetails, IconCalendarEvent, IconBell, IconInfoCircle } from '@tabler/icons-react'
 import { useRoutineStore } from '../store/routineStore'
 
 const DAYS_OF_WEEK: Record<number, string> = {
@@ -76,8 +76,8 @@ export default function RoutineDetailPage() {
              <Stack gap={4}>
                 <Title order={2} style={{ fontWeight: 800 }}>{routine.title}</Title>
                 <Group gap="xs">
-                  <Badge variant="dot" color='indigo'>v{routine.version}</Badge>
-                  <Text size="sm" c="dimmed">{routine.fields.length} Fields defined</Text>
+                  <Badge variant="dot" color='indigo'>Version {routine.version}</Badge>
+                  <Text size="sm" c="dimmed">{routine.fields.length} Data points</Text>
                 </Group>
              </Stack>
              <Group gap="xs">
@@ -139,7 +139,7 @@ export default function RoutineDetailPage() {
              <Stack gap="xs">
                 <Group gap="xs">
                   <ThemeIcon variant="light" color='indigo' size="sm">
-                    <IconSettings size={16} />
+                    <IconInfoCircle size={16} />
                   </ThemeIcon>
                   <Text fw={700} size="sm">About this routine</Text>
                 </Group>
@@ -153,12 +153,12 @@ export default function RoutineDetailPage() {
              <ThemeIcon variant="light" color='indigo' size="sm">
                 <IconListDetails size={16} />
              </ThemeIcon>
-             <Text fw={700}>Schema definition</Text>
+             <Text fw={700}>What's being tracked</Text>
           </Group>
           
           <Stack gap="sm">
             {routine.fields.length === 0 && (
-              <Text c="dimmed" size="sm" ta="center" py="xl">No fields defined for this routine.</Text>
+              <Text c="dimmed" size="sm" ta="center" py="xl">Nothing is being tracked yet.</Text>
             )}
             {routine.fields.map((field) => (
               <Card key={field.name} radius="md" padding="md" withBorder>
