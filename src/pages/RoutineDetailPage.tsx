@@ -45,15 +45,17 @@ export default function RoutineDetailPage() {
   const renderFrequency = () => {
     if (!routine.frequency) return 'Not set'
     const { type, value, days } = routine.frequency
+    const count = value || 1
     switch (type) {
       case 'daily':
-        return 'Daily'
+        return `${count} Daily`
       case 'weekly':
-        return `${value} times per week`
+        return `${count} Weekly`
       case 'monthly':
-        return `${value} times per month`
+        return `${count} Monthly`
       case 'specific_days':
-        return (days || []).map((d) => DAYS_OF_WEEK[d]).join(', ')
+        const daysLabel = (days || []).map((d) => DAYS_OF_WEEK[d]).join(', ')
+        return `${count} Daily on ${daysLabel}`
       default:
         return 'Not set'
     }
