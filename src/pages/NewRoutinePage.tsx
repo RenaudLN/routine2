@@ -27,7 +27,6 @@ import { useDisclosure } from '@mantine/hooks'
 import { notifications } from '@mantine/notifications'
 import {
   IconArrowLeft,
-  IconGripVertical,
   IconPlus,
   IconTrash,
   IconSettings,
